@@ -61,6 +61,7 @@ class NavNode {
       this.level = parent.level + 1;
       thumbnail.style.backgroundColor = "rgba(176, 232, 183, 0.3)";
       thumbnail.style.backdropFilter = "blur(5px)";
+      thumbnail.style.webkitBackdropFilter="blur(5px)";
       thumbnail.style.userSelect = "none";
       var st = this.content.style;
       st.position = "absolute";
