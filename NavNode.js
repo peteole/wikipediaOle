@@ -5,6 +5,14 @@ class NavNode {
       window.innerHeight - gap + "px";
     this.childControlDiv.style.left =
       (gap + (window.innerWidth - thumbnailWidth) / 2) + "px";
+    this.thumbnail.style.position = "absolute";
+    this.thumbnail.style.width = thumbnailWidth - gap + "px";
+    this.thumbnail.style.height = thumbnailHeight - gap + "px";
+    this.thumbnail.style.left =
+      this.positionFromParent * thumbnailWidth + "px";
+    this.childControlDiv.style.left =
+      (window.innerWidth - thumbnailWidth) / 2 + "px";
+    this.childControlDiv.style.top = -(this.level + 1) * thumbnailHeight + "px";
     this.children.forEach(child => child.resize());
   }
   constructor(
@@ -59,10 +67,12 @@ class NavNode {
       this.parent.childControlDiv.style.width =
         this.parent.children.length * thumbnailWidth + "px";
       this.level = parent.level + 1;
-      thumbnail.style.backgroundColor = "rgba(176, 232, 183, 0.3)";
+      /*thumbnail.style.backgroundColor = "rgba(176, 232, 183, 0.3)";
       thumbnail.style.backdropFilter = "blur(5px)";
-      thumbnail.style.webkitBackdropFilter="blur(5px)";
-      thumbnail.style.userSelect = "none";
+      thumbnail.style.webkitBackdropFilter = "blur(5px)";
+      thumbnail.style.userSelect = "none";*/
+      thumbnail.className = "thumbnail";
+      thumbnail.style.backgroundColor=thumbnailColor;
       var st = this.content.style;
       st.position = "absolute";
       st.left =
@@ -80,6 +90,10 @@ class NavNode {
   }
   updateDiv() {
     this.childDiv.style.left = -window.innerWidth * this.childPosition + "px";
+  }
+  forEach(f=function(el=new NavNode()){}){
+    f(this);
+    this.children.forEach(child=>child.forEach(f));
   }
 }
 

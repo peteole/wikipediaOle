@@ -2,7 +2,9 @@ let headlineTagNames = ["h1", "h2", "h3", "h4", "h5", "h6"];
 function getNavNodeFromHtml(html = "") {
     let parse = document.createElement("div");
     parse.innerHTML = html;
-    parse.firstElementChild.prepend(document.createElement("h1"));
+    if (parse.firstElementChild && parse.firstElementChild.tagName != "H1") {
+        parse.firstElementChild.prepend(document.createElement("h1"));
+    }
     var root = new NavNode(null);
     var h = parse.querySelectorAll("h1, h2, h3, h4, h5, h6");
     var links = parse.querySelectorAll("a");
@@ -44,11 +46,11 @@ function getNavNodeFromHtml(html = "") {
                 parent = parent.parent;
             }
         } else {
-            for (var i = 0; i < dif-1; i++) {
+            for (var i = 0; i < dif - 1; i++) {
                 parent = new NavNode(parent);
             }
         }
-        lastNode=new NavNode(parent,content,thumbnail);
+        lastNode = new NavNode(parent, content, thumbnail);
         /*switch (level - lastNode.level) {
             case 1:
                 lastNode = new NavNode(lastNode, content, thumbnail);

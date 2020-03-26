@@ -4,6 +4,7 @@ var currentDepth = 0;
 var currentOpenDepth = 0;
 var ySwipe = 0;
 var openPage = document.createElement("div");
+var settings = document.createElement("div");
 var win = document.createElement("div");
 var upButton = document.createElement("div");
 var slideTime = 300;
@@ -17,13 +18,59 @@ var lastEl = [];
 var footerY = 0;
 var drawnContents = new Set([]);
 var nameToNavNode = new Map();
+let articleToNode = new Map();
+var thumbnailColor = "rgba(176, 232, 183, 0.3)"
 window.onresize = function () {
     this.win.style.height = window.innerHeight + "px";
     this.winHeight = window.innerHeight;
     this.winWidth = window.innerWidth;
     this.root.resize();
 };
+function setWidth() {
+    thumbnailWidth = parseFloat(document.getElementById("tWidth").value);
+    localStorage.setItem("thumbnailWidth", thumbnailWidth);
+    root.resize();
+}
+function setHeight() {
+    thumbnailHeight = parseFloat(document.getElementById("tHeight").value);
+    localStorage.setItem("thumbnailHeight", thumbnailHeight);
+    root.resize();
+}
+function setColor() {
+    var opacity = parseFloat(document.getElementById("opacity").value) / 100;
+    var colorRaw = document.getElementById("colorPicker").value;
+    var tmp = document.createElement("div");
+    tmp.style.backgroundColor = colorRaw;
+    var withoutTrans = tmp.style.backgroundColor;
+    thumbnailColor = "rgba" + withoutTrans.substring(3, withoutTrans.length - 1) + ", " + opacity + ")";
+    localStorage.setItem("thumbnailColor", thumbnailColor);
+    this.root.forEach(el => {
+        el.thumbnail.style.backgroundColor = thumbnailColor
+    });
+}
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').then(function (reg) {
+
+        if (reg.installing) {
+            console.log('Service worker installing');
+        } else if (reg.waiting) {
+            console.log('Service worker installed');
+        } else if (reg.active) {
+            console.log('Service worker active');
+        }
+
+    }).catch(function (error) {
+        // registration failed
+        console.log('Registration failed with ' + error);
+    });
+}
 window.onload = function () {
+    if (this.localStorage.getItem("thumbnailColor"))
+        this.thumbnailColor = localStorage.getItem("thumbnailColor");
+    if (localStorage.getItem("thumbnailWidth"))
+        thumbnailWidth = parseFloat(localStorage.getItem("thumbnailWidth"));
+    if (localStorage.getItem("thumbnailHeight"))
+        thumbnailHeight = parseFloat(localStorage.getItem("thumbnailHeight"));
     this.win.style.height = window.innerHeight + "px";
     this.win.style.width = "100%";
     this.win.style.position = "absolute";
@@ -54,7 +101,7 @@ window.onload = function () {
             );
         }
     }.bind(this);
-    window.onhashchange=function(){
+    window.onhashchange = function () {
         var urlString = window.location.href;
         var url = new this.URL(urlString);
         this.loadWiki(url.hash.substring(1)).then(loadHTMLText);
@@ -62,6 +109,10 @@ window.onload = function () {
     var urlString = window.location.href;
     var url = new this.URL(urlString);
     this.loadWiki(url.hash.substring(1)).then(loadHTMLText);
+    this.settings.className = "settings";
+    this.settings.style.height = this.winHeight - this.thumbnailHeight + "px";
+    this.settings.innerHTML = "<h1>Settings</h1><p>thumbnail width:<input id=\"tWidth\" onchange=\"setWidth()\" type=\"range\" max=\"300\" min=\"50\"></p> <p> thumbnail height <input id=\"tHeight\" onchange=\"setHeight()\" type=\"range\" max=\"100\" min=\"20\"></p><p> set color<input type=color id=\"colorPicker\" onchange=\"setColor()\"></p><p> opacity <input id=\"opacity\" onchange=\"setColor()\" type=\"range\" max=\"100\" min=\"0\"></p>";
+    this.footer.appendChild(settings);
     this.footer.setAttribute("class", "slideFooter");
     this.footer.style.top = "100%"; //window.innerHeight-50+"px";
     //this.document.body.appendChild(this.upButton);

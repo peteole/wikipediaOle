@@ -1,7 +1,7 @@
 
 function updateSliders(minLevelToUpdate = 0) {
     //removeChildren(footer);
-    var c = footer.firstChild;
+    var c = footer.firstChild.nextSibling;
     while (c) {
         if (c.current.level >= minLevelToUpdate) {
             var next = c.nextSibling;
@@ -56,7 +56,7 @@ function activateNode(current = new NavNode(), addSwiper = true) {
         //initialize aliases
         ySwipe = sw.currentY;
         if (ySwipe < 0) {
-            ySwipe = 0;
+            //ySwipe = 0;
         }
         currentOpenDepth = Math.round(ySwipe / thumbnailHeight);
         if (currentOpenDepth > currentDepth) {
@@ -80,7 +80,7 @@ function activateNode(current = new NavNode(), addSwiper = true) {
         });
         if (selected.childControlDiv.a) {
             var currentX = selected.childControlDiv.a.currentX;
-            lastEl = getSurroundingElements(selected, 2);
+            lastEl = getSurroundingElements(selected, 1);
             lastEl.forEach(el => {
                 var newEl = el.thumbnail;
                 if (!newEl.parentNode) {
@@ -182,6 +182,13 @@ function activateNode(current = new NavNode(), addSwiper = true) {
         toAdd.style.transitionDuration = "0.0s";
         //sw.moveElementWithoutTouch(new Point(-pos*thumbnailHeight,0));
         toAdd.current.childPosition = posX;
+        if(sw.currentY<-winHeight/2){
+            sw.breakToPoint(
+                new Point(-posX * thumbnailWidth, -winHeight+thumbnailHeight),
+                slideTime
+            );
+            return;
+        }
         sw.breakToPoint(
             new Point(-posX * thumbnailWidth, currentOpenDepth * thumbnailHeight),
             slideTime

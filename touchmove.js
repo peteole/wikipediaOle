@@ -248,6 +248,7 @@ class SwipeElementItem {
                 window.requestAnimationFrame(this.g);
             } else {
                 f(0);
+                window.navigator.vibrate(50);
             }
         }.bind(this);
         window.requestAnimationFrame(this.g);
