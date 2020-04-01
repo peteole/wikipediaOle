@@ -1,88 +1,146 @@
-.slideFooter{
-    position: fixed;
-    width:100%;
-    height: 100%;
-    left:0;
-    touch-action: none;
-    z-index: 3;
+.slideFooter {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  touch-action: none;
+  z-index: 3;
 }
-body{
-    background-color: whitesmoke;
-    font-family: sans-serif;
+body {
+  background-color: whitesmoke;
+  font-family: sans-serif;
 }
-.content{
-    background-color: white;
-    overflow-y: auto;
-    position: absolute;
-    transform-origin: 0 0;
-    border-radius: 10px;
+.content {
+  background-color: white;
+  overflow-y: auto;
+  position: absolute;
+  transform-origin: 0 0;
+  border-radius: 10px;
 }
-.content>*{
-    margin-left: 10px;
-    margin-right: 10px;
+.content > * {
+  margin-left: 10px;
+  margin-right: 10px;
 }
-
-.content>*:last-child{
-    margin-bottom: 60px;
+.settings {
+  position: absolute;
+  width: 90%;
+  left: 5%;
+  background-color: white;
+  border-radius: 10px;
 }
-.p{
-    size: 20;
+.content > *:last-child {
+  margin-bottom: 60px;
 }
-.slider{
-    height: 50px;
-    touch-action: none;
-    position: absolute;
-    z-index: 10;
+.p {
+  size: 20;
 }
-.slider *{
-    touch-action: none;
-    border-radius: 5px;
-    height: 100%;
-    margin-right:3px;
-    position: static;
-    overflow: hidden;
+.slider {
+  height: 50px;
+  touch-action: none;
+  position: absolute;
+  z-index: 10;
 }
-.div{
-    transform-origin: 0 0;
+.slider * {
+  touch-action: none;
+  border-radius: 5px;
+  height: 100%;
+  margin-right: 3px;
+  position: static;
+  overflow: hidden;
+}
+.popup {
+  position: absolute;
+  height: 50%;
+  width: 90%;
+  left: 5%;
+  top: 45%;
+  border-radius: 5px;
+  z-index: 20;
+  background-color: #a2a9b1;
+}
+.closeButton{
+  color: red;
+  position: absolute;
+  top: 2%;
+  right: 2%;
+  width: 10%;
+  height: 10%;
+}
+.searchHeader{
+  width: 95%;
+  height: 30px;
+}
+.searchHeader *{
+  height: 100%;
+}
+.searchHeader button{
+  width: 5%;
+  text-align: center;
+}
+.searchBar{
+  font-size: 100%;
+  width: 90%;
+}
+.controlButton{
+  width: 100%;
+  height: 20%;
+}
+.thumbnail {
+  /*background-color: rgba(176, 232, 183, 0.3);*/
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  user-select: none;
+}
+.div {
+  transform-origin: 0 0;
 }
 div.thumbinner {
-    border: 1px solid #c8ccd1;
-    padding: 3px;
-    background-color: #f8f9fa;
-    font-size: 94%;
-    text-align: center;
-    overflow: hidden;
+  border: 1px solid #c8ccd1;
+  padding: 3px;
+  background-color: #f8f9fa;
+  font-size: 94%;
+  text-align: center;
+  overflow: hidden;
 }
 html .thumbimage {
-    background-color: #fff;
-    border: 1px solid #c8ccd1;
+  background-color: #fff;
+  border: 1px solid #c8ccd1;
 }
 .mw-body-content h2 {
-    margin-top: 1em;
-    font-size: 1.5em;
+  margin-top: 1em;
+  font-size: 1.5em;
 }
-.mw-body h1, .mw-body-content h1, .mw-body-content h2 {
-    margin-bottom: 0.25em;
-    padding: 0;
-    font-family: 'Linux Libertine','Georgia','Times',serif;
-    line-height: 1.3;
+.mw-body h1,
+.mw-body-content h1,
+.mw-body-content h2 {
+  margin-bottom: 0.25em;
+  padding: 0;
+  font-family: "Linux Libertine", "Georgia", "Times", serif;
+  line-height: 1.3;
 }
 h2 {
-    font-size: 150%;
+  font-size: 150%;
 }
-h1, h2, h3, h4, h5, h6 {
-    color: #000;
-    background: none;
-    font-weight: normal;
-    margin: 0;
-    overflow: hidden;
-    padding-top: 0.5em;
-    padding-bottom: 0.17em;
-    border-bottom: 1px solid #a2a9b1;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: #000;
+  background: none;
+  font-weight: normal;
+  margin: 0;
+  overflow: hidden;
+  padding-top: 0.5em;
+  padding-bottom: 0.17em;
+  border-bottom: 1px solid #a2a9b1;
 }
-.toc, .mw-warning, .toccolours {
-    border: 1px solid #a2a9b1;
-    background-color: #f8f9fa;
-    padding: 5px;
-    font-size: 95%;
+.toc,
+.mw-warning,
+.toccolours {
+  border: 1px solid #a2a9b1;
+  background-color: #f8f9fa;
+  padding: 5px;
+  font-size: 95%;
 }

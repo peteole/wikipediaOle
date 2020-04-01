@@ -1,21 +1,45 @@
 let headlineTagNames = ["h1", "h2", "h3", "h4", "h5", "h6"];
+/**
+ * 
+ * @param {string} html - html text to parse
+ * @returns {NavNode} parsed root node
+ */
 function getNavNodeFromHtml(html = "") {
     let parse = document.createElement("div");
     parse.innerHTML = html;
-    parse.firstElementChild.prepend(document.createElement("h1"));
+    if (parse.firstElementChild && parse.firstElementChild.tagName != "H1") {
+        parse.firstElementChild.prepend(document.createElement("h1"));
+    }
     var root = new NavNode(null);
     var h = parse.querySelectorAll("h1, h2, h3, h4, h5, h6");
     var links = parse.querySelectorAll("a");
     for (var link of links) {
         link.onclick = function (ev) {
             ev.preventDefault();
-            let name = ev.target.pathname;
+            /**@type {NavNode} */
+            var node;
+            for(let potentialTarget of ev.path){
+                if(potentialTarget.navNode){
+                    node=potentialTarget.navNode;
+                    break;
+                }
+            }
+            while(node.level>1){
+                node=node.parent;
+            }
+            let nameSplit = ev.target.pathname.split("/");
+            var newOpenTabs=urlToArray(window.location.href);
+            newOpenTabs[node.positionFromParent]=nameSplit[nameSplit.length-1];
+            window.location.href=arrayToUrl(newOpenTabs);
+            /*let name = ev.target.pathname;
+            let tabNumber=openPages.indexOf(name);
+
             let nameSplit = name.split("/");
             var url = new URL(window.location.href);
             var title = nameSplit[nameSplit.length - 1];
             url.hash = title;
             window.history.pushState(null, "Wikipipedia: " + title, url.href);
-            loadWiki(nameSplit[nameSplit.length - 1]).then(loadHTMLText);
+            loadWiki(nameSplit[nameSplit.length - 1]).then(loadHTMLText);*/
         }
     }
     var lastNode = root;
@@ -44,11 +68,11 @@ function getNavNodeFromHtml(html = "") {
                 parent = parent.parent;
             }
         } else {
-            for (var i = 0; i < dif-1; i++) {
+            for (var i = 0; i < dif - 1; i++) {
                 parent = new NavNode(parent);
             }
         }
-        lastNode=new NavNode(parent,content,thumbnail);
+        lastNode = new NavNode(parent, content, thumbnail);
         /*switch (level - lastNode.level) {
             case 1:
                 lastNode = new NavNode(lastNode, content, thumbnail);

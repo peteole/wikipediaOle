@@ -1,7 +1,7 @@
 
 function updateSliders(minLevelToUpdate = 0) {
     //removeChildren(footer);
-    var c = footer.firstChild;
+    var c = footer.firstChild.nextSibling;
     while (c) {
         if (c.current.level >= minLevelToUpdate) {
             var next = c.nextSibling;
@@ -51,13 +51,30 @@ function activateNode(current = new NavNode(), addSwiper = true) {
 
     a.onMoveStart = function (sw) {
         sw.lastControlYRest = ySwipe;
+        if (sw.swipeElement.current.level == 0) {
+            sw.checkTime = window.setTimeout(handler => {
+                if (sw.moveLengthSinceLastTouch < 10) {
+                    sw.abortMove();
+                    sw.onMoveEnd(sw);
+                    //popup menu
+                    let targets = document.elementsFromPoint(sw.lastEvent.clientX, sw.lastEvent.clientY);
+                    /**@type {ThumbnailDiv} */
+                    var target;
+                    for (let t of targets) {
+                        if (t.className == "thumbnail") {
+                            target = t;
+                        }
+                    }
+                    if (target&&target.navNode.positionFromParent!=root.numOfChildren-1) {
+                        document.body.appendChild(getPopupMenu(target.navNode));
+                    }
+                }
+            }, 500)
+        }
     };
-    a.onMove = function (sw) {
+    a.onMove = (sw) => {
         //initialize aliases
         ySwipe = sw.currentY;
-        if (ySwipe < 0) {
-            ySwipe = 0;
-        }
         currentOpenDepth = Math.round(ySwipe / thumbnailHeight);
         if (currentOpenDepth > currentDepth) {
             currentOpenDepth = currentDepth;
@@ -80,7 +97,7 @@ function activateNode(current = new NavNode(), addSwiper = true) {
         });
         if (selected.childControlDiv.a) {
             var currentX = selected.childControlDiv.a.currentX;
-            lastEl = getSurroundingElements(selected, 2);
+            lastEl = getSurroundingElements(selected, 1);
             lastEl.forEach(el => {
                 var newEl = el.thumbnail;
                 if (!newEl.parentNode) {
@@ -128,8 +145,9 @@ function activateNode(current = new NavNode(), addSwiper = true) {
                 parentControler.moveElementWithoutTouch(new Point())
             }*/
         updateElementPositions();
-    }.bind(this);
-    a.onMoveEnd = function (sw, p) {
+    }
+    a.onMoveEnd = function (sw) {
+        window.clearTimeout(sw.checkTime);
         if (
             distance(sw.initialTouchPos, sw.lastTouchPos) < 10 &&
             sw.getTimeMoving() < 200
@@ -139,6 +157,9 @@ function activateNode(current = new NavNode(), addSwiper = true) {
                 sw.lastTouchPos.x,
                 sw.lastTouchPos.y
             );
+            /**
+             * @type {SwipeElementItem}
+             */
             var swipeElController;
             var swipeNode;
             for (var el of below) {
@@ -156,7 +177,7 @@ function activateNode(current = new NavNode(), addSwiper = true) {
                         (swipeNode.level - 1) * thumbnailHeight
                     ),
                     slideTime
-                );
+                ).then(() => navigator.vibrate(10));
                 return;
             }
         }
@@ -182,6 +203,13 @@ function activateNode(current = new NavNode(), addSwiper = true) {
         toAdd.style.transitionDuration = "0.0s";
         //sw.moveElementWithoutTouch(new Point(-pos*thumbnailHeight,0));
         toAdd.current.childPosition = posX;
+        if (sw.currentY < -winHeight / 2) {
+            sw.breakToPoint(
+                new Point(-posX * thumbnailWidth, -winHeight + thumbnailHeight),
+                slideTime
+            );
+            return;
+        }
         sw.breakToPoint(
             new Point(-posX * thumbnailWidth, currentOpenDepth * thumbnailHeight),
             slideTime
@@ -195,4 +223,37 @@ function activateNode(current = new NavNode(), addSwiper = true) {
     a.moveElementWithoutTouch(
         new Point(-thumbnailWidth * current.childPosition, ySwipe)
     );
+}
+/**
+ * 
+ * @param {NavNode} node - Node of concern
+ * @returns {HTMLDivElement} popup
+ */
+function getPopupMenu(node) {
+    let popup = document.createElement("div");
+    popup.className = "popup";
+    let headline = document.createElement("h1")
+    headline.innerHTML = "Options for article \"" + node.thumbnail.innerText + "\"";
+    popup.appendChild(headline);
+    popup.appendChild(document.createElement("hr"));
+    let closeButton = document.createElement("button");
+    closeButton.innerHTML = "&#10006;";
+    closeButton.className = "closeButton";
+    closeButton.onclick = function (ev) {
+        this.parentElement.removeChild(this);
+    }.bind(popup);
+    popup.appendChild(closeButton);
+    let closeArticleButton = document.createElement("button");
+    closeArticleButton.className = "controlButton";
+    closeArticleButton.innerHTML = "close article";
+    closeArticleButton.node = node
+    closeArticleButton.onclick = function (evt) {
+        openPages.splice(this.node.positionFromParent, 1);
+        this.node.parent.removeChildNode(this.node.positionFromParent);
+        this.parentElement.parentElement.removeChild(this.parentElement);
+        updateSliders();
+        window.history.pushState(null, "Wikipedia Ole", arrayToUrl(openPages));
+    }.bind(closeArticleButton);
+    popup.appendChild(closeArticleButton);
+    return popup;
 }

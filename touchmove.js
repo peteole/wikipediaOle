@@ -33,7 +33,16 @@ class SwipeElementItem {
         this.currentX = 0;
         this.currentY = 0;
         this.sliding = false;
-        this.onMove = function (swipeControler = new SwipeElementItem(null)) {
+        /**
+         * @type {PointerEvent}
+         */
+        this.lastEvent=null;
+        this.moveLengthSinceLastTouch = 0;
+        /**
+         * @function
+         * @param {SwipeElementItem} swipeControler
+         */
+        this.onMove = function (swipeControler) {
             SwipeElementItem.moveElement(swipeControler.currentX, swipeControler.currentY, swipeControler.swipeElement);
         }
         this.lastMove = new Point(0, 0);
@@ -98,15 +107,20 @@ class SwipeElementItem {
         this.lastUpdate = currentTime;
         return toReturn;
     }
+    /**
+     * get time since first touch
+     * @return time in milliseconds
+     */
     getTimeMoving() {
         return new Date().getTime() - this.initialTime;
     }
     // Handle the start of gestures
     handleGestureStart(evt) {
+        this.lastEvent=evt;
         this.initialTime = new Date().getTime();
         this.onMoveStart(this);
         evt.preventDefault();
-
+        this.moveLengthSinceLastTouch = 0;
         if (evt.touches && evt.touches.length > 1) {
             return;
         }
@@ -144,18 +158,24 @@ class SwipeElementItem {
     // Handle move gestures
     //
     /* // [START handle-move] */
+    /**
+     * 
+     * @param {PointerEvent} evt 
+     */
     handleGestureMove(evt) {
-        evt.preventDefault();
-
+        this.lastEvent=evt;
         if (this.abort) {
             this.handleGestureEnd(evt);
             this.abort = false;
         }
+        evt.preventDefault();
         if (!this.initialTouchPos) {
             //this.handleGestureEnd(evt);
             return;
         }
-        this.lastTouchPos = this.getGesturePointFromEvent(evt);
+        var newLastTouchPos = this.getGesturePointFromEvent(evt);
+        this.moveLengthSinceLastTouch += distance(newLastTouchPos, this.lastTouchPos);
+        this.lastTouchPos = newLastTouchPos;
         this.updateV(new Point(this.currentX, this.currentY));
 
         if (this.rafPending) {
@@ -171,6 +191,7 @@ class SwipeElementItem {
     /* // [START handle-end-gesture] */
     // Handle end gestures
     handleGestureEnd(evt) {
+        this.lastEvent=evt;
         document.body.style.touchaction = "default";
         if (!this.initialTouchPos) {
             // Remove Event Listeners
@@ -239,19 +260,28 @@ class SwipeElementItem {
         }
     }
     static animateFunction(f = function (tPart = 0) { }, t = 100) {
-        this.timeLimit = new Date().getTime() + t;
-        this.t = t;
-        this.g = function () {
-            var leftTimePart = (this.timeLimit - new Date().getTime()) / this.t;
-            if (leftTimePart > 0) {
-                f(leftTimePart);
-                window.requestAnimationFrame(this.g);
-            } else {
-                f(0);
-            }
-        }.bind(this);
-        window.requestAnimationFrame(this.g);
+        return new Promise((resolve, reject) => {
+            this.timeLimit = new Date().getTime() + t;
+            this.t = t;
+            this.g = function () {
+                var leftTimePart = (this.timeLimit - new Date().getTime()) / this.t;
+                if (leftTimePart > 0) {
+                    f(leftTimePart);
+                    window.requestAnimationFrame(this.g);
+                } else {
+                    f(0);
+                    resolve();
+                }
+            }.bind(this);
+            window.requestAnimationFrame(this.g);
+        })
     }
+    /**
+     * 
+     * @param {Point} p - target point to slide to
+     * @param {number} t -time to use in ms
+     * @returns {Promise<void>}
+     */
     slideToPoint(p = new Point(0, 0), t = 100) {
         this.target = p;
         this.lastFix = new Point(this.currentX, this.currentY);
@@ -262,21 +292,27 @@ class SwipeElementItem {
             }
         }.bind(this);
         this.sliding = true;
-        SwipeElementItem.animateFunction(f, t);
+        return SwipeElementItem.animateFunction(f, t)
 
         //this.abortMove();
     }
 
-    //decelerate from current speed until arriving at specified point
+    /**
+     * decelerate from current speed until arriving at specified point
+     * @param {Point} p - target point to slide to
+     * @param {number} t -time to use in ms
+     * @returns {Promise<void>}
+     */
     breakToPoint(p = new Point(0, 0), t = 100) {
         this.target = p;
         this.lastFix = new Point(this.currentX, this.currentY);
         var lastSpeed = Math.sqrt(this.currentVX * this.currentVX + this.currentVY * this.currentVY);
         var dist = this.lastFix.distanceTo(p);
         this.v0 = lastSpeed / dist;
-        if (isNaN(this.v0)) {
+        if (!isFinite(this.v0)) {
             this.v0 = 0;
-            return;
+            console.log("problem");
+            //return;
         }
         var f = function (tPart = 0) {
             var sPart = this.v0 * tPart + (1 - this.v0) * tPart * tPart
@@ -286,7 +322,7 @@ class SwipeElementItem {
             }
         }.bind(this);
         this.sliding = true;
-        SwipeElementItem.animateFunction(f, t);
+        return SwipeElementItem.animateFunction(f, t);
 
         //this.abortMove();
     }
