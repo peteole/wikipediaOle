@@ -1,0 +1,9 @@
+<h1>Settings</h1>
+<p>thumbnail width:<input id="tWidth" onchange="setWidth()" type="range" max="300" min="50"></p>
+<p> thumbnail height <input id="tHeight" onchange="setHeight()" type="range" max="100" min="20"></p>
+<p> set color<input type=color id="colorPicker" onchange="setColor()"></p>
+<p> opacity <input id="opacity" onchange="setColor()" type="range" max="100" min="0"></p>
+<p><button
+        onclick="navigator.storage.estimate().then(res=>{document.getElementById('storageEstimateOutput').innerHTML='using '+Math.round(res.usage/1024/1024)+'Mb of '+Math.round(res.quota/1024/1024)+'Mb ('+Math.round(100*res.usage/res.quota)+'%)';})">estimate
+        storage usage</button>
+    <p id="storageEstimateOutput"></p>

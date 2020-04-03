@@ -280,7 +280,7 @@ class SwipeElementItem {
      * 
      * @param {Point} p - target point to slide to
      * @param {number} t -time to use in ms
-     * @returns {Promise<void>}
+     * @returns {Promise<void>} when ready
      */
     slideToPoint(p = new Point(0, 0), t = 100) {
         this.target = p;
@@ -296,7 +296,22 @@ class SwipeElementItem {
 
         //this.abortMove();
     }
-
+    /** slide to specified x coordinate
+     * @param {number} newX - target x coordinate to slide to
+     * @param {number} t -time to use in ms
+     * @returns {Promise<void>} when ready
+     */
+    slideToX(newX=0,t=100){
+        return this.slideToPoint(new Point(newX,this.currentY),t);
+    }
+    /** slide to specified x coordinate
+     * @param {number} newY - target x coordinate to slide to
+     * @param {number} t -time to use in ms
+     * @returns {Promise<void>} when ready
+     */
+    slideToY(newY=0,t=100){
+        return this.slideToPoint(new Point(this.currentX,newY),t);
+    }
     /**
      * decelerate from current speed until arriving at specified point
      * @param {Point} p - target point to slide to

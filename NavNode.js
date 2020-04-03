@@ -2,6 +2,9 @@
  * @typedef {HTMLDivElement & {navNode:NavNode}} ThumbnailDiv
  */
 /**
+ * @typedef {HTMLDivElement & {a:SwipeElementItem}} ChildControlDiv
+ */
+/**
  * @class
  */
 class NavNode {
@@ -9,15 +12,13 @@ class NavNode {
     this.content.style.width = window.innerWidth - gap + "px";
     this.content.style.height =
       window.innerHeight - gap + "px";
-    this.childControlDiv.style.left =
-      (gap + (window.innerWidth - thumbnailWidth) / 2) + "px";
     this.thumbnail.style.position = "absolute";
     this.thumbnail.style.width = thumbnailWidth - gap + "px";
     this.thumbnail.style.height = thumbnailHeight - gap + "px";
     this.thumbnail.style.left =
       this.positionFromParent * thumbnailWidth + "px";
     this.childControlDiv.style.left =
-      (window.innerWidth - thumbnailWidth) / 2 + "px";
+      (window.innerWidth + gap - thumbnailWidth) / 2 + "px";
     this.childControlDiv.style.top = -(this.level + 1) * thumbnailHeight + "px";
     this.children.forEach(child => child.resize());
   }
@@ -39,7 +40,7 @@ class NavNode {
     content.style.width = window.innerWidth - gap + "px";
     content.style.height = window.innerHeight - gap + "px";
     content.setAttribute("class", "content");
-    content.navNode=this;
+    content.navNode = this;
     /*content.style.backgroundColor="rgb(230,230,230)";
         content.style.overflowY="auto";
         content.style.position="absolute";
@@ -60,6 +61,7 @@ class NavNode {
     this.children = [];
     this.childDiv = document.createElement("div");
     this.childDiv.style.position = "absolute";
+    /**@type {ChildControlDiv} */
     this.childControlDiv = document.createElement("div");
     this.childControlDiv.style.height = thumbnailHeight + "px";
     //this.childControlDiv.style.position="absolute";
@@ -100,7 +102,7 @@ class NavNode {
     }
     this.childControlDiv.setAttribute("class", "slider");
     this.childControlDiv.style.left =
-      (window.innerWidth - thumbnailWidth) / 2 + "px";
+      (window.innerWidth - thumbnailWidth + gap) / 2 + "px";
     this.childControlDiv.style.top = -(this.level + 1) * thumbnailHeight + "px";
     //this.childControlDiv.style.width=this.children.length*thumbnailHeight+"px";
   }
@@ -145,7 +147,7 @@ class NavNode {
     }
     this.childControlDiv.style.width = this.children.length * thumbnailWidth + "px";
     this.childControlDiv.removeChild(toRemove.thumbnail);
-    toRemove.forEach(el=>el.content.parentNode.removeChild(el.content));
+    toRemove.forEach(el => el.content.parentNode.removeChild(el.content));
   }
   /**
    * 
@@ -168,7 +170,7 @@ class NavNode {
     newNode.positionFromParent = index
     newNode.thumbnail.style.left = newNode.positionFromParent * thumbnailWidth + "px";
     this.childControlDiv.appendChild(newNode.thumbnail);
-    toRemove.forEach(el=>el.content.parentNode.removeChild(el.content));
+    toRemove.forEach(el => el.content.parentNode.removeChild(el.content));
   }
 }
 

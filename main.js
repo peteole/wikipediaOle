@@ -22,7 +22,7 @@ var footerY = 0;
 /**
  * @type {string[]}
  */
-var openPages=[];
+var openPages = [];
 /**
  * @type {Set<HTMLDivElement>}
  */
@@ -35,6 +35,7 @@ window.onresize = function () {
     this.winHeight = window.innerHeight;
     this.winWidth = window.innerWidth;
     this.root.resize();
+    this.updateElementPositions();
 };
 function setWidth() {
     thumbnailWidth = parseFloat(document.getElementById("tWidth").value);
@@ -60,7 +61,6 @@ function setColor() {
 }
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').then(function (reg) {
-
         if (reg.installing) {
             console.log('Service worker installing');
         } else if (reg.waiting) {
@@ -75,6 +75,7 @@ if ('serviceWorker' in navigator) {
     });
 }
 window.onload = function () {
+    this.setupOfflineStorage();
     if (this.localStorage.getItem("thumbnailColor"))
         this.thumbnailColor = localStorage.getItem("thumbnailColor");
     if (localStorage.getItem("thumbnailWidth"))
@@ -112,30 +113,42 @@ window.onload = function () {
         }
     }.bind(this);
     window.onhashchange = function () {
-        var newPageNames=this.urlToArray(window.location.href);
-        for(var i=newPageNames.length;i<this.openPages.length;i++){
+        var newPageNames = this.urlToArray(window.location.href);
+        for (var i = newPageNames.length; i < this.openPages.length; i++) {
             this.root.removeChildNode(i);
             updateSliders();
         }
-        for(var i=0;i<this.Math.min(newPageNames.length,this.openPages.length);i++){
-            if(this.openPages[i]!=newPageNames[i]){
-                this.loadWiki(newPageNames[i]).then(function(index,text){
-                    var newArticle=getNavNodeFromHtml(text).children[0];
-                    newArticle.thumbnail.innerHTML=newPageNames[index];
-                    window.root.replaceChildNode(newArticle,index);
+        for (var i = 0; i < this.Math.min(newPageNames.length, this.openPages.length); i++) {
+            if (this.openPages[i] != newPageNames[i]) {
+                this.loadWiki(newPageNames[i]).then(function (index, text) {
+                    var newArticle = getNavNodeFromHtml(text).children[0];
+                    newArticle.thumbnail.innerHTML = newPageNames[index];
+                    window.root.replaceChildNode(newArticle, index);
                     updateSliders();
-                }.bind(null,i))
+                }.bind(null, i))
             }
         }
-        for(var i=this.openPages.length;i<newPageNames.length;i++){
-            this.loadWiki(newPageNames[i]).then(function(index,text){
+        /**@type {Promise<string>[]} */
+        var allPromises = [];
+        for (var i = this.openPages.length; i < newPageNames.length; i++) {
+            allPromises.push(this.loadWiki(newPageNames[i]))/*.then(function(index,text){
                 var newArticle=getNavNodeFromHtml(text).children[0];
                 newArticle.thumbnail.innerHTML=newPageNames[index];
                 window.root.addChildNode(newArticle,index);
                 updateSliders();
-            }.bind(null,i))
+            }.bind(null,i))*/
         }
-        this.openPages=newPageNames;
+        Promise.all(allPromises).then(results => {
+            for (let i in results) {
+                var newArticle = getNavNodeFromHtml(results[i]).children[0];
+                newArticle.thumbnail.innerHTML = newPageNames[i];
+                window.root.addChildNode(newArticle, i);
+            }
+            updateSliders();
+        })
+        this.openPages = newPageNames;
+        //this.updateSliders();
+        this.root.childControlDiv.a.slideToY(0, slideTime);
     }
     var urlString = window.location.href;
     var url = new this.URL(urlString);
@@ -144,7 +157,6 @@ window.onload = function () {
     thumbnail.innerHTML = "+";
     thumbnail.style.textAlign = "center";
     var searchPage = new NavNode(root, createSearchPage(), thumbnail);
-    window.onhashchange();
     /*var pages = url.hash.substring(1).split("%");
     for (let i in pages) {
         this.loadWiki(pages[i]).then(htmlText => {
@@ -157,7 +169,11 @@ window.onload = function () {
     //this.loadWiki(url.hash.substring(1)).then(loadHTMLText);
     this.settings.className = "settings";
     this.settings.style.height = this.winHeight - this.thumbnailHeight + "px";
-    this.settings.innerHTML = "<h1>Settings</h1><p>thumbnail width:<input id=\"tWidth\" onchange=\"setWidth()\" type=\"range\" max=\"300\" min=\"50\"></p> <p> thumbnail height <input id=\"tHeight\" onchange=\"setHeight()\" type=\"range\" max=\"100\" min=\"20\"></p><p> set color<input type=color id=\"colorPicker\" onchange=\"setColor()\"></p><p> opacity <input id=\"opacity\" onchange=\"setColor()\" type=\"range\" max=\"100\" min=\"0\"></p>";
+    this.fetch("settings.html").then(res =>
+        res.text().then(text=>
+            this.settings.innerHTML=text
+            ));
+    //this.settings.innerHTML = "<h1>Settings</h1><p>thumbnail width:<input id=\"tWidth\" onchange=\"setWidth()\" type=\"range\" max=\"300\" min=\"50\"></p> <p> thumbnail height <input id=\"tHeight\" onchange=\"setHeight()\" type=\"range\" max=\"100\" min=\"20\"></p><p> set color<input type=color id=\"colorPicker\" onchange=\"setColor()\"></p><p> opacity <input id=\"opacity\" onchange=\"setColor()\" type=\"range\" max=\"100\" min=\"0\"></p>";
     this.footer.appendChild(settings);
     this.footer.setAttribute("class", "slideFooter");
     this.footer.style.top = "100%"; //window.innerHeight-50+"px";
@@ -165,6 +181,7 @@ window.onload = function () {
     this.document.body.appendChild(this.footer);
     this.document.body.appendChild(this.win);
     updateSliders();
+    window.onhashchange();
 };
 function loadHTMLText(text) {
     while (win.firstChild) {

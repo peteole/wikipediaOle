@@ -65,7 +65,7 @@ function activateNode(current = new NavNode(), addSwiper = true) {
                             target = t;
                         }
                     }
-                    if (target&&target.navNode.positionFromParent!=root.numOfChildren-1) {
+                    if (target && target.navNode.positionFromParent != root.numOfChildren - 1) {
                         document.body.appendChild(getPopupMenu(target.navNode));
                     }
                 }
@@ -224,6 +224,8 @@ function activateNode(current = new NavNode(), addSwiper = true) {
         new Point(-thumbnailWidth * current.childPosition, ySwipe)
     );
 }
+
+var depthToLoad = 0;
 /**
  * 
  * @param {NavNode} node - Node of concern
@@ -255,5 +257,46 @@ function getPopupMenu(node) {
         window.history.pushState(null, "Wikipedia Ole", arrayToUrl(openPages));
     }.bind(closeArticleButton);
     popup.appendChild(closeArticleButton);
+    const downloadOutput = document.createElement("progress");
+    downloadOutput.value = 0;
+    const depthSlider = createRangeLabeledSlider(0, 5, 1, (val) => "max url clicks: " + val, (val) => depthToLoad = val);
+    const articleLimiter = createRangeLabeledSlider(1, 1000, 100, (val) => "max #downloads: " + val, (val) => {
+        maxArticlesToDownload = val;
+        downloadOutput.max = val;
+    });
+    depthSlider.className = "downloadSlider";
+    articleLimiter.className = "downloadSlider";
+    const downloadOptions = document.createElement("div");
+    downloadOptions.appendChild(depthSlider);
+    downloadOptions.appendChild(articleLimiter);
+    downloadOptions.appendChild(downloadOutput);
+    popup.appendChild(downloadOptions);
+
+    let startDownloadButton = document.createElement("button");
+    startDownloadButton.className = "controlButton";
+    startDownloadButton.innerHTML = "start download";
+    startDownloadButton.node = node
+    startDownloadButton.articleLimiter = articleLimiter;
+    startDownloadButton.depthSlider = depthSlider
+    startDownloadButton.downloadOutput = downloadOutput;
+    startDownloadButton.onclick = function (evt) {
+        if (this.wasClicked) {
+            return;
+        }
+        this.wasClicked = true;
+        this.innerHTML = "downloading...";
+        const articleName = this.node.thumbnail.innerText;
+        articlesDownloaded = 0;
+        articlesStartedDownloading = 0;
+        this.downloadOutput.value = 0;
+        downloadArticleAndLinks(articleName, depthToLoad, function (d) {
+            this.downloadOutput.value = d;
+        }.bind(this)).then(function () {
+            this.wasClicked = false;
+            this.innerHTML = "start download";
+        }.bind(this)
+        )
+    }.bind(startDownloadButton);
+    popup.appendChild(startDownloadButton);
     return popup;
 }

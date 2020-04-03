@@ -1,7 +1,7 @@
 self.addEventListener("install", event => {
 
     event.waitUntil(
-        caches.open('v1').then(function (cache) {
+        caches.open('v4').then(function (cache) {
             return cache.addAll([
                 'home.html',
                 'main.js',
@@ -12,6 +12,11 @@ self.addEventListener("install", event => {
                 'loadWiki.js',
                 'HtmlToNavNode.js',
                 'ElementPositioning.js',
+                'OfflineStorage.js',
+                'SearchPage.js',
+                'Hashes.js',
+                'RangeLabeledSlider.js',
+                'settings.html',
                 'general.js'
             ]);
         })
@@ -24,18 +29,23 @@ self.addEventListener('fetch', function (event) {
         if (response !== undefined) {
             return response;
         } else {
-            return fetch(event.request).then(function (response) {
-                // response may be used only once
-                // we need to save clone to put one copy in cache
-                // and serve second one
-                let responseClone = response.clone();
-                caches.open('v1').then(function (cache) {
-                    cache.put(event.request, responseClone);
-                });
-                return response;
-            }).catch(function () {
-                return null;
-            });
+            return fetch(event.request);
         }
     }));
 });
+let expectedCaches=["v4"]
+self.addEventListener('activate', event => {
+    // delete any caches that aren't in expectedCaches
+    // which will get rid of static-v1
+    event.waitUntil(
+      caches.keys().then(keys => Promise.all(
+        keys.map(key => {
+          if (!expectedCaches.includes(key)) {
+            return caches.delete(key);
+          }
+        })
+      )).then(() => {
+        console.log('v4 now ready to handle fetches!');
+      })
+    );
+  });

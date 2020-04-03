@@ -4,7 +4,7 @@
  * @returns {string[]} open page names
  */
 function hashToArray(hash){
-    return hash.substring(1).split("%");
+    return hash.substring(1).split("%%");
 }
 /**
  * 
@@ -12,11 +12,14 @@ function hashToArray(hash){
  * @returns {string} hash value representation
  */
 function arrayToHash(array){
+    if(array.length==0){
+        return "#";
+    }
     var toReturn="#";
     for(let name of array){
-        toReturn+=name+"%";
+        toReturn+=name+"%%";
     }
-    return toReturn.substr(0,toReturn.length-1);
+    return toReturn.substr(0,toReturn.length-2);
 }
 /**
  * 
