@@ -1,7 +1,7 @@
 self.addEventListener("install", event => {
 
 	event.waitUntil(
-		caches.open('v5').then(function (cache) {
+		caches.open('v6').then(function (cache) {
 			return cache.addAll([
 				'home.html',
 				'main.js',
@@ -35,7 +35,7 @@ self.addEventListener('fetch', function (event) {
 		}
 	}));
 });
-let expectedCaches = ["v5"];
+let expectedCaches = ["v6"];
 self.addEventListener('activate', event => {
 	// delete any caches that aren't in expectedCaches
 	// which will get rid of static-v1
@@ -47,7 +47,7 @@ self.addEventListener('activate', event => {
 				}
 			})
 		)).then(() => {
-			console.log('v5 now ready to handle fetches!');
+			console.log('v6 now ready to handle fetches!');
 		})
 	);
 });
