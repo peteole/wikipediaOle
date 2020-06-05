@@ -1,26 +1,39 @@
-function updateElementPositions() {
-    var newElements = getSurroundingElements(getOpenElement(), 2);
-    /*newElements.forEach(el => {
-        if (!el.childrenLoaded) {
-            loadChildren(el);
-        }
-    });*/
+/**
+ * 
+ * @param {SlideNavigator} navigator 
+ */
+function updateElementPositions(navigator=null) {
+    var newElements = getSurroundingElements(getOpenElement(navigator), 2);
     drawnContents.forEach(el => {
         if (!newElements.has(el)) {
             el.childDiv.style.display = "none";
         }
     });
     //newElements.forEach((el)=>{drawnContents.add(el)});
-    newElements.forEach(el => updateElementPosition(el));
+    newElements.forEach(el => updateElementPosition(el,navigator));
     drawnContents = newElements;
 }
 
-function updateElementPosition(el = new NavNode()) {
+/**
+ * 
+ * @param {NavNode} el 
+ * @param {SlideNavigator} navigator 
+ */
+function updateElementPosition(el = new NavNode(),navigator=null) {
+    var thumbnailWidth=navigator.thumbnailWidth;
+    var thumbnailHeight=navigator.thumbnailHeight;
+    var gap=navigator.gap;
+    if (el.parent&&!el.parent.isSelectedByParent()){
+        el.children.forEach(a => a.content.style.display = "none");
+        return;
+    }
+    var winWidth=navigator.winWidth;
+    var winHeight=navigator.winHeight;
     if (!el.childControlDiv.a) {
-        activateNode(el, false);
+        activateNode(el, false,navigator);
     }
     var swipeX = el.childControlDiv.a.currentX / thumbnailWidth;
-    var swipeY = ySwipe / thumbnailHeight;
+    var swipeY = navigator.ySwipe / thumbnailHeight;
     var elYPos = el.level;
     var yDif = swipeY - elYPos;
     if (Math.abs(yDif) > 1) {
@@ -31,7 +44,6 @@ function updateElementPosition(el = new NavNode()) {
     var leftestPoint = 0;
     if (yDif <= -1 + distaneWithoutScaling) {
         var scalingFactor = 1 / el.children.length;
-        var leftestPoint = 0;
         if (el.parent && el.parent.childControlDiv.a) {
             leftestPoint =
                 el.parent.childControlDiv.a.currentX / thumbnailWidth +
@@ -59,7 +71,7 @@ function updateElementPosition(el = new NavNode()) {
         }
         var zoomFactor = 1 / el.children.length;
         var partAtTarget = yDif / (1 - distaneWithoutScaling);
-        var scalingFactor = 1 - (1 - zoomFactor) * -partAtTarget;
+        let scalingFactor = 1 - (1 - zoomFactor) * -partAtTarget;
         var xScalingFactor = scalingFactor;
         var selected = false;
         //el.childDiv.style.top=zoomFactor*yDif*win.clientHeight+"px";
@@ -105,7 +117,7 @@ function updateElementPosition(el = new NavNode()) {
                 if (left <= 1 && left >= -xScalingFactor) {
                     a.content.style.display = "initial";
                     a.content.style.left =
-                        (gap * xScalingFactor) / 2 + left * winWidth + "px";
+                        (gap * xScalingFactor) / 2 + left * navigator.winWidth + "px";
                     a.content.style.transform = "scale(" + xScalingFactor + ")";
                     if (selected) {
                         a.content.style.top =
@@ -146,8 +158,8 @@ function updateElementPosition(el = new NavNode()) {
         });
     } else {
         //elements getting bigger
-        var zoomFactor = 0;
-        var partAtTarget =
+        let zoomFactor = 0;
+        let partAtTarget =
             (yDif - distaneWithoutScaling) / (1 - distaneWithoutScaling);
         if (isValidIndex(el.childPosition, el.children)) {
             zoomFactor = el.children[el.childPosition].children.length;
@@ -155,7 +167,7 @@ function updateElementPosition(el = new NavNode()) {
         if (zoomFactor == 0) {
             zoomFactor = 1;
         }
-        var scalingFactor = 1 + (zoomFactor - 1) * partAtTarget;
+        let scalingFactor = 1 + (zoomFactor - 1) * partAtTarget;
         //el.childDiv.style.top=yDif*win.clientHeight+"px";
         if (
             el.children[el.childPosition] &&

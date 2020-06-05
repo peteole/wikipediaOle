@@ -12,36 +12,7 @@ function getNavNodeFromHtml(html = "") {
     }
     var root = new NavNode(null);
     var h = parse.querySelectorAll("h1, h2, h3, h4, h5, h6");
-    var links = parse.querySelectorAll("a");
-    for (var link of links) {
-        link.onclick = function (ev) {
-            ev.preventDefault();
-            /**@type {NavNode} */
-            var node;
-            for(let potentialTarget of ev.path){
-                if(potentialTarget.navNode){
-                    node=potentialTarget.navNode;
-                    break;
-                }
-            }
-            while(node.level>1){
-                node=node.parent;
-            }
-            let nameSplit = ev.target.pathname.split("/");
-            var newOpenTabs=urlToArray(window.location.href);
-            newOpenTabs[node.positionFromParent]=nameSplit[nameSplit.length-1];
-            window.location.href=arrayToUrl(newOpenTabs);
-            /*let name = ev.target.pathname;
-            let tabNumber=openPages.indexOf(name);
-
-            let nameSplit = name.split("/");
-            var url = new URL(window.location.href);
-            var title = nameSplit[nameSplit.length - 1];
-            url.hash = title;
-            window.history.pushState(null, "Wikipipedia: " + title, url.href);
-            loadWiki(nameSplit[nameSplit.length - 1]).then(loadHTMLText);*/
-        }
-    }
+    setLinkActions(parse);
     var lastNode = root;
     for (var headline of h) {
         var level = parseInt(headline.tagName.charAt(1));
@@ -50,7 +21,7 @@ function getNavNodeFromHtml(html = "") {
         let content = document.createElement("div");
         var start = headline;
         while (start.parentNode && start.parentNode.querySelectorAll("h1, h2, h3, h4, h5, h6").length == 1) {
-            start = start.parentNode
+            start = start.parentNode;
         }
         if (start != headline) {
             content.appendChild(start);
@@ -64,11 +35,11 @@ function getNavNodeFromHtml(html = "") {
         var dif = level - lastNode.level;
         var parent = lastNode;
         if (dif <= 1) {
-            for (var i = 0; i < 1 - dif; i++) {
+            for (let i = 0; i < 1 - dif; i++) {
                 parent = parent.parent;
             }
         } else {
-            for (var i = 0; i < dif - 1; i++) {
+            for (let i = 0; i < dif - 1; i++) {
                 parent = new NavNode(parent);
             }
         }
@@ -88,4 +59,38 @@ function getNavNodeFromHtml(html = "") {
         }*/
     }
     return root;
+}
+/**
+ * 
+ * @param {HTMLElement} parse 
+ */
+function setLinkActions(parse) {
+    var links = parse.querySelectorAll("a");
+    for (var link of links) {
+        link.onclick = (ev) => {
+            ev.preventDefault();
+            /**@type {NavNode} */
+            var node;
+            for (let potentialTarget of ev.composedPath()) {
+                if (potentialTarget.navNode) {
+                    node = potentialTarget.navNode;
+                    break;
+                }
+            }
+            while (node.level > 1) {
+                node = node.parent;
+            }
+            let nameSplit = ev.target.pathname.split("/");
+            if (nameSplit[1] == "wiki") {
+                let newOpenTabs = urlToArray(window.location.href);
+                newOpenTabs[node.positionFromParent].location = nameSplit[nameSplit.length - 1];
+                window.location.href = arrayToUrl(newOpenTabs);
+            }
+            else {
+                let newOpenTabs = urlToArray(window.location.href);
+                newOpenTabs[node.positionFromParent] = new Tab(ev.target.href, "e", "en", "p");
+                window.location.href = arrayToUrl(newOpenTabs);
+            }
+        };
+    }
 }

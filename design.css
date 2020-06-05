@@ -9,6 +9,7 @@
 body {
   background-color: whitesmoke;
   font-family: sans-serif;
+  margin: 0px;
 }
 .content {
   background-color: white;
@@ -33,6 +34,10 @@ body {
 }
 .p {
   size: 20;
+}
+iframe{
+  width: 100%;
+  height: 100%;
 }
 .slider {
   height: 50px;
@@ -90,17 +95,22 @@ body {
 .searchHeader{
   width: 95%;
   height: 30px;
+  display: flex;
 }
 .searchHeader *{
   height: 100%;
+  width: 40px;
 }
 .searchHeader button{
-  width: 10%;
   text-align: center;
 }
 .searchBar{
   font-size: 100%;
-  width: 85%;
+  flex-grow: 1;
+}
+
+.languageInput{
+  font-size: 100%;
 }
 .thumbnail {
   /*background-color: rgba(176, 232, 183, 0.3);*/

@@ -1,19 +1,20 @@
 
 function updateSliders(minLevelToUpdate = 0) {
     //removeChildren(footer);
-    var c = footer.firstChild.nextSibling;
-    while (c) {
-        if (c.current.level >= minLevelToUpdate) {
-            var next = c.nextSibling;
-            footer.removeChild(c);
-            c = next;
-        } else {
-            c = c.nextSibling;
+    if (footer.firstChild) {
+        var c = footer.firstChild.nextSibling;
+        while (c) {
+            if (c.current.level >= minLevelToUpdate) {
+                var next = c.nextSibling;
+                footer.removeChild(c);
+                c = next;
+            } else {
+                c = c.nextSibling;
+            }
         }
     }
     var depth = 0;
-    //var current=new NavNode();
-    current = root;
+    var current = root;
     for (
         var i = root;
         i.children[i.childPosition] != null;
@@ -22,24 +23,64 @@ function updateSliders(minLevelToUpdate = 0) {
         depth++;
         current = i;
     }
-    updateElementPositions()
-    //currentOpenDepth+=depth-currentDepth;
-    //footer.style.transitionDuration="0s";
-    //footer.z.moveElementWithoutTouch(new Point(0,-currentOpenDepth*thumbnailHeight));
-    //SwipeElementItem.moveElement(0,thumbnailWidth*currentOpenDepth,footer);
+    updateElementPositions();
     currentDepth = depth;
     while (current && current.level >= minLevelToUpdate) {
         activateNode(current);
         current = current.parent;
     }
-    //updateOpenElement();
+}
+/**
+ * 
+ * @param {SlideNavigator} navigator 
+ * @param {number} minLevelToUpdate 
+ */
+function updateSlidersNav(navigator, minLevelToUpdate = 0) {
+    if (navigator.footer.firstChild) {
+        var c = navigator.footer.firstChild.nextSibling;
+        while (c) {
+            if (c.current.level >= minLevelToUpdate) {
+                var next = c.nextSibling;
+                navigator.footer.removeChild(c);
+                c = next;
+            } else {
+                c = c.nextSibling;
+            }
+        }
+    }
+    var depth = 0;
+    var current = navigator.root;
+    for (
+        var i = root;
+        i.children[i.childPosition] != null;
+        i = i.children[i.childPosition]
+    ) {
+        depth++;
+        current = i;
+    }
+    updateElementPositions(navigator);
+    navigator.currentDepth = depth;
+    while (current && current.level >= minLevelToUpdate) {
+        activateNode(current, true, navigator);
+        current = current.parent;
+    }
 }
 
-function activateNode(current = new NavNode(), addSwiper = true) {
+/**
+ * 
+ * @param {NavNode} current 
+ * @param {boolean} addSwiper 
+ * @param {SlideNavigator} slideNavigator 
+ */
+function activateNode(current = new NavNode(), addSwiper = true, slideNavigator = null) {
     var toAdd = current.childControlDiv;
     toAdd.current = current;
     if (addSwiper) {
-        footer.appendChild(toAdd);
+        if (slideNavigator) {
+            slideNavigator.footer.appendChild(toAdd);
+        } else {
+            footer.appendChild(toAdd);
+        }
     }
     if (toAdd.a) {
         //toAdd.a.moveElementWithoutTouch(new Point(-thumbnailWidth*current.childPosition,ySwipe));
@@ -50,7 +91,9 @@ function activateNode(current = new NavNode(), addSwiper = true) {
     toAdd.a = a;
 
     a.onMoveStart = function (sw) {
-        sw.lastControlYRest = ySwipe;
+        /**@type {SlideNavigator} */
+        var slideNavigator = sw.swipeElement.current.navigator;
+        sw.lastControlYRest = slideNavigator.ySwipe;
         if (sw.swipeElement.current.level == 0) {
             sw.checkTime = window.setTimeout(handler => {
                 if (sw.moveLengthSinceLastTouch < 10) {
@@ -67,38 +110,45 @@ function activateNode(current = new NavNode(), addSwiper = true) {
                     }
                     if (target && target.navNode.positionFromParent != root.numOfChildren - 1) {
                         document.body.appendChild(getPopupMenu(target.navNode));
+                    } else {
+                        alert("Problem!!!");
                     }
                 }
-            }, 500)
+            }, 500);
         }
     };
     a.onMove = (sw) => {
         //initialize aliases
-        ySwipe = sw.currentY;
-        currentOpenDepth = Math.round(ySwipe / thumbnailHeight);
-        if (currentOpenDepth > currentDepth) {
-            currentOpenDepth = currentDepth;
+        /**@type {SlideNavigator} */
+        var slideNavigator = sw.swipeElement.current.navigator;
+        var thumbnailWidth = slideNavigator.thumbnailWidth;
+        var thumbnailHeight = slideNavigator.thumbnailHeight;
+        var gap = slideNavigator.gap;
+        slideNavigator.ySwipe = sw.currentY;
+        var currentOpenDepth = Math.round(slideNavigator.ySwipe / thumbnailHeight);
+        if (currentOpenDepth > slideNavigator.currentDepth) {
+            currentOpenDepth = slideNavigator.currentDepth;
         } else if (currentOpenDepth < 0) {
             currentOpenDepth = 0;
         }
-        var slider = document.createElement("div");
-        var contentContainer = document.createElement("div");
+        slideNavigator.currentOpenDepth = currentOpenDepth;
+        //var contentContainer = document.createElement("div");
         slider = sw.swipeElement;
         //var node=new NavNode();
         node = sw.swipeElement.current;
         contentContainer = node.childDiv;
 
         SwipeElementItem.moveElement(sw.currentX, 0, sw.swipeElement);
-        SwipeElementItem.moveElement(0, ySwipe, footer);
-        var selected = getOpenElement();
-        lastEl.forEach(function (el) {
+        SwipeElementItem.moveElement(0, slideNavigator.ySwipe, slideNavigator.footer);
+        var selected = getOpenElement(slideNavigator);
+        slideNavigator.lastEl.forEach(function (el) {
             el.thumbnail.style.transform = "initial";
             el.thumbnail.style.filter = "none";
         });
         if (selected.childControlDiv.a) {
             var currentX = selected.childControlDiv.a.currentX;
-            lastEl = getSurroundingElements(selected, 1);
-            lastEl.forEach(el => {
+            slideNavigator.lastEl = getSurroundingElements(selected, 1);
+            slideNavigator.lastEl.forEach(el => {
                 var newEl = el.thumbnail;
                 if (!newEl.parentNode) {
                     return;
@@ -107,7 +157,7 @@ function activateNode(current = new NavNode(), addSwiper = true) {
                 if (el.parent.childControlDiv.a) {
                     parentX = el.parent.childControlDiv.a.currentX;
                 }
-                var d = Math.abs(el.positionFromParent * thumbnailWidth + parentX) + Math.abs((el.level - 1) * thumbnailHeight - ySwipe);
+                var d = Math.abs(el.positionFromParent * thumbnailWidth + parentX) + Math.abs((el.level - 1) * thumbnailHeight - slideNavigator.ySwipe);
                 newEl.style.transform = "scale(" + (1.0 + 1.0 / (5 + d)) + ")";
                 newEl.style.filter =
                     "saturate(" + 20 / (1 + (8 * d) / thumbnailWidth) + ")";
@@ -123,9 +173,14 @@ function activateNode(current = new NavNode(), addSwiper = true) {
         node.childPosition = newPos;
         if (oldChildPos != sw.swipeElement.current.childPosition) {
             //draw new children
-            updateSliders(sw.swipeElement.current.level + 1);
+            if (slideNavigator) {
+                updateSlidersNav(slideNavigator, sw.swipeElement.current.level + 1);
+            } else {
+                console.log("Achtung!!!");
+                //updateSliders(sw.swipeElement.current.level + 1);
+            }
         }
-        var l = ySwipe / thumbnailHeight;
+        var l = slideNavigator.ySwipe / thumbnailHeight;
         /*if(l>node.level+distaneWithoutScaling&&l<=node.level+1){
                 if(node.children.length>0){
                     //var dist=(sw.currentX+node.children[node.childPosition].childControlDiv.a.currentX)/thumbnailWidth+newPos;
@@ -144,9 +199,14 @@ function activateNode(current = new NavNode(), addSwiper = true) {
                 var parentControler=node.parent.swipeElement.current;
                 parentControler.moveElementWithoutTouch(new Point())
             }*/
-        updateElementPositions();
-    }
+        updateElementPositions(slideNavigator);
+    };
     a.onMoveEnd = function (sw) {
+        /**@type {SlideNavigator} */
+        var slideNavigator = sw.swipeElement.current.navigator;
+        var thumbnailWidth = slideNavigator.thumbnailWidth;
+        var thumbnailHeight = slideNavigator.thumbnailHeight;
+        var gap = slideNavigator.gap;
         window.clearTimeout(sw.checkTime);
         if (
             distance(sw.initialTouchPos, sw.lastTouchPos) < 10 &&
@@ -170,7 +230,7 @@ function activateNode(current = new NavNode(), addSwiper = true) {
                 }
             }
             if (swipeElController) {
-                swipeElController.moveElementYWithoutTouch(ySwipe, false);
+                swipeElController.moveElementYWithoutTouch(slideNavigator.ySwipe, false);
                 swipeElController.slideToPoint(
                     new Point(
                         -swipeNode.positionFromParent * thumbnailWidth,
@@ -192,36 +252,36 @@ function activateNode(current = new NavNode(), addSwiper = true) {
             posX = max - 1;
         }
         var posY = Math.round(sw.currentY / thumbnailHeight);
-        max = currentDepth;
+        max = slideNavigator.currentDepth;
         if (posY < 0) {
             posY = 0;
         } else if (posY >= max) {
             posY = max - 1;
         }
-        currentOpenDepth = posY;
+        slideNavigator.currentOpenDepth = posY;
         var oldTrans = toAdd.style.transitionDuration;
         toAdd.style.transitionDuration = "0.0s";
         //sw.moveElementWithoutTouch(new Point(-pos*thumbnailHeight,0));
         toAdd.current.childPosition = posX;
-        if (sw.currentY < -winHeight / 2) {
+        if (sw.currentY < -slideNavigator.winHeight / 2) {
             sw.breakToPoint(
-                new Point(-posX * thumbnailWidth, -winHeight + thumbnailHeight),
+                new Point(-posX * thumbnailWidth, -slideNavigator.winHeight + thumbnailHeight),
                 slideTime
             );
             return;
         }
         sw.breakToPoint(
-            new Point(-posX * thumbnailWidth, currentOpenDepth * thumbnailHeight),
+            new Point(-posX * thumbnailWidth, slideNavigator.currentOpenDepth * thumbnailHeight),
             slideTime
         );
-        footerY = currentOpenDepth * thumbnailHeight;
+        slideNavigator.footerY = slideNavigator.currentOpenDepth * thumbnailHeight;
         toAdd.style.transitionDuration = oldTrans;
 
         //setTimeout(updateSliders,slideTime);
         //updateSliders();
     }.bind(this);
     a.moveElementWithoutTouch(
-        new Point(-thumbnailWidth * current.childPosition, ySwipe)
+        new Point(-thumbnailWidth * current.childPosition, slideNavigator ? slideNavigator.ySwipe : ySwipe)
     );
 }
 
@@ -234,7 +294,7 @@ var depthToLoad = 0;
 function getPopupMenu(node) {
     let popup = document.createElement("div");
     popup.className = "popup";
-    let headline = document.createElement("h1")
+    let headline = document.createElement("h1");
     headline.innerHTML = "Options for article \"" + node.thumbnail.innerText + "\"";
     popup.appendChild(headline);
     popup.appendChild(document.createElement("hr"));
@@ -248,12 +308,13 @@ function getPopupMenu(node) {
     let closeArticleButton = document.createElement("button");
     closeArticleButton.className = "controlButton";
     closeArticleButton.innerHTML = "close article";
-    closeArticleButton.node = node
+    closeArticleButton.node = node;
     closeArticleButton.onclick = function (evt) {
         openPages.splice(this.node.positionFromParent, 1);
         this.node.parent.removeChildNode(this.node.positionFromParent);
         this.parentElement.parentElement.removeChild(this.parentElement);
-        updateSliders();
+        updateSlidersNav(slideNavigator);
+        slideNavigator.onresize();
         window.history.pushState(null, "Wikipedia Ole", arrayToUrl(openPages));
     }.bind(closeArticleButton);
     popup.appendChild(closeArticleButton);
@@ -275,9 +336,9 @@ function getPopupMenu(node) {
     let startDownloadButton = document.createElement("button");
     startDownloadButton.className = "controlButton";
     startDownloadButton.innerHTML = "start download";
-    startDownloadButton.node = node
+    startDownloadButton.node = node;
     startDownloadButton.articleLimiter = articleLimiter;
-    startDownloadButton.depthSlider = depthSlider
+    startDownloadButton.depthSlider = depthSlider;
     startDownloadButton.downloadOutput = downloadOutput;
     startDownloadButton.onclick = function (evt) {
         if (this.wasClicked) {
@@ -295,8 +356,17 @@ function getPopupMenu(node) {
             this.wasClicked = false;
             this.innerHTML = "start download";
         }.bind(this)
-        )
+        );
     }.bind(startDownloadButton);
     popup.appendChild(startDownloadButton);
+    const selectType = document.createElement("input");
+    selectType.onchange = ev => {
+        var url = new URL(window.location.href);
+        let openPagesCopy = urlToArray();
+        openPagesCopy[node.positionFromParent].layout = selectType.value;
+        url.hash = arrayToHash(openPagesCopy);
+        window.location = url;
+    };
+    popup.appendChild(selectType);
     return popup;
 }

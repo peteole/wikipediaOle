@@ -11,7 +11,15 @@ function distance(A, B) {
     return Math.sqrt((A.x - B.x) * (A.x - B.x) + (A.y - B.y) * (A.y - B.y));
 }
 class Mover {
-    constructor(element = document.createElement("div"), tarX, tarY, x, y) {
+    /**
+     * 
+     * @param {HTMLDivElement} element 
+     * @param {number} tarX 
+     * @param {number} tarY 
+     * @param {number} x 
+     * @param {number} y 
+     */
+    constructor(element, tarX, tarY, x, y) {
         this.tarX = tarX;
         this.tarY = tarY;
         this.x = x;
@@ -36,7 +44,7 @@ class SwipeElementItem {
         /**
          * @type {PointerEvent}
          */
-        this.lastEvent=null;
+        this.lastEvent = null;
         this.moveLengthSinceLastTouch = 0;
         /**
          * @function
@@ -44,22 +52,22 @@ class SwipeElementItem {
          */
         this.onMove = function (swipeControler) {
             SwipeElementItem.moveElement(swipeControler.currentX, swipeControler.currentY, swipeControler.swipeElement);
-        }
+        };
         this.lastMove = new Point(0, 0);
         this.lastUpdate = new Date().getTime();
         this.initialTime = new Date().getTime();
         this.pointToMove = function (point = new Point(0, 0)) {
             return point;
-        }
+        };
         this.moveToPoint = function (move = new Point(0, 0)) {
             return move;
-        }
+        };
         this.onMoveEnd = function (swipeControler = new SwipeElementItem(null), mousePosition = new Point(0, 0)) {
 
-        }
+        };
         this.onMoveStart = function (swipeControler = new SwipeElementItem(null)) {
 
-        }
+        };
         if (window.PointerEvent) {
             // Add Pointer Event Listener
             swipeElement.addEventListener('pointerdown', this.handleGestureStart.bind(this), true);
@@ -116,7 +124,7 @@ class SwipeElementItem {
     }
     // Handle the start of gestures
     handleGestureStart(evt) {
-        this.lastEvent=evt;
+        this.lastEvent = evt;
         this.initialTime = new Date().getTime();
         this.onMoveStart(this);
         evt.preventDefault();
@@ -163,7 +171,7 @@ class SwipeElementItem {
      * @param {PointerEvent} evt 
      */
     handleGestureMove(evt) {
-        this.lastEvent=evt;
+        this.lastEvent = evt;
         if (this.abort) {
             this.handleGestureEnd(evt);
             this.abort = false;
@@ -191,7 +199,7 @@ class SwipeElementItem {
     /* // [START handle-end-gesture] */
     // Handle end gestures
     handleGestureEnd(evt) {
-        this.lastEvent=evt;
+        this.lastEvent = evt;
         document.body.style.touchaction = "default";
         if (!this.initialTouchPos) {
             // Remove Event Listeners
@@ -205,6 +213,7 @@ class SwipeElementItem {
             console.log("Warum????");
             return;
         }
+
         evt.preventDefault();
 
         if (evt.touches && evt.touches.length > 0) {
@@ -213,13 +222,18 @@ class SwipeElementItem {
 
         this.rafPending = false;
 
-        // Remove Event Listeners
-        if (window.PointerEvent) {
-            evt.target.releasePointerCapture(evt.pointerId);
-        } else {
-            // Remove Mouse Listeners
-            document.removeEventListener('mousemove', this.handleGestureMove, true);
-            document.removeEventListener('mouseup', this.handleGestureEnd, true);
+        try {
+
+            // Remove Event Listeners
+            if (window.PointerEvent) {
+                evt.target.releasePointerCapture(evt.pointerId);
+            } else {
+                // Remove Mouse Listeners
+                document.removeEventListener('mousemove', this.handleGestureMove, true);
+                document.removeEventListener('mouseup', this.handleGestureEnd, true);
+            }
+        } catch (error) {
+            console.log(error);
         }
         document.body.style.touchaction = "default";
         this.onMoveEnd(this, this.lastTouchPos);
@@ -274,7 +288,7 @@ class SwipeElementItem {
                 }
             }.bind(this);
             window.requestAnimationFrame(this.g);
-        })
+        });
     }
     /**
      * 
@@ -292,7 +306,7 @@ class SwipeElementItem {
             }
         }.bind(this);
         this.sliding = true;
-        return SwipeElementItem.animateFunction(f, t)
+        return SwipeElementItem.animateFunction(f, t);
 
         //this.abortMove();
     }
@@ -301,16 +315,16 @@ class SwipeElementItem {
      * @param {number} t -time to use in ms
      * @returns {Promise<void>} when ready
      */
-    slideToX(newX=0,t=100){
-        return this.slideToPoint(new Point(newX,this.currentY),t);
+    slideToX(newX = 0, t = 100) {
+        return this.slideToPoint(new Point(newX, this.currentY), t);
     }
     /** slide to specified x coordinate
      * @param {number} newY - target x coordinate to slide to
      * @param {number} t -time to use in ms
      * @returns {Promise<void>} when ready
      */
-    slideToY(newY=0,t=100){
-        return this.slideToPoint(new Point(this.currentX,newY),t);
+    slideToY(newY = 0, t = 100) {
+        return this.slideToPoint(new Point(this.currentX, newY), t);
     }
     /**
      * decelerate from current speed until arriving at specified point
@@ -330,7 +344,7 @@ class SwipeElementItem {
             //return;
         }
         var f = function (tPart = 0) {
-            var sPart = this.v0 * tPart + (1 - this.v0) * tPart * tPart
+            var sPart = this.v0 * tPart + (1 - this.v0) * tPart * tPart;
             this.moveElementWithoutTouch(new Point(sPart * this.lastFix.x + (1 - sPart) * this.target.x, sPart * this.lastFix.y + (1 - sPart) * this.target.y));
             if (tPart == 0) {
                 this.sliding = false;
@@ -390,7 +404,7 @@ class SwipeElementItem {
         this.onMove(this);
         this.rafPending = false;
     }
-    static moveElement(x = 0, y = 0, el) {
+    static moveElement(x = 0, y = 0, el=document.createElement("div")) {
         var newXTransform = x + 'px';
         var newYTransform = y + 'px';
 

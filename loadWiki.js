@@ -1,18 +1,27 @@
 /**
  * 
+ * @param {Tab} toLoad 
+ * @param {boolean} store 
+ * @param {boolean} preferNetwork 
+ */
+function loadWikiTab(toLoad,store=true,preferNetwork=false){
+    return loadWiki(toLoad.location,toLoad.language,store,preferNetwork);
+}
+/**
+ * 
  * @param {string} article -name of article to load
  * @param {boolean} store -whether to save the article offline or not
  * @param {boolean} preferNetwork - whether to download the latest version of the article if possible
  * @returns {Promise<string>} -article html text as string
  */
-async function loadWiki(article, store = true, preferNetwork = false) {
+async function loadWiki(article, language = "en", store = true, preferNetwork = false) {
     /*var storedArticle=localStorage.getItem(article);
     if(storedArticle){
         return storedArticle;
     }*/
     if (!(navigator.onLine && preferNetwork)) {
         await offlineStorage.getReadyPromise();
-        var storedArticle = await offlineStorage.loadArticle(article, "en");
+        var storedArticle = await offlineStorage.loadArticle(article, language);
         if (storedArticle) {
             return storedArticle;
         }
@@ -20,7 +29,7 @@ async function loadWiki(article, store = true, preferNetwork = false) {
     if (navigator.onLine) {
 
 
-        const url = "https://en.wikipedia.org/w/api.php?" +
+        const url = "https://" + language + ".wikipedia.org/w/api.php?" +
             new URLSearchParams({
                 origin: "*",
                 action: "parse",
@@ -33,12 +42,12 @@ async function loadWiki(article, store = true, preferNetwork = false) {
             const json = await req.json();
             var text = json.parse.text["*"];
             //localStorage.setItem(article,text);
-            offlineStorage.storeArticle(article, "en", text).then(
+            offlineStorage.storeArticle(article, language, text).then(
                 () => console.log("finished")
             )
                 .catch((reason) =>
                     console.log(reason)
-                )
+                );
             return text;
         } catch (e) {
             console.error(e);
@@ -57,17 +66,17 @@ var maxArticlesToDownload = 0;
  * @param {number} maxDepth - maximum depth to download from current article
  * @param {(number)=>void} onDownloadnumberChange - callback when a download finished
  */
-async function downloadArticleAndLinks(article, maxDepth, onDownloadnumberChange = (n) => console.log(n)) {
+async function downloadArticleAndLinks(article, maxDepth, onDownloadnumberChange = (n) => console.log(n), language = "en") {
     if (!offlineStorage.isReady()) {
         await offlineStorage.getReadyPromise();
     }
-    var text = await offlineStorage.loadArticle(article, "en");
+    var text = await offlineStorage.loadArticle(article, language);
     if (!text) {
         if (articlesDownloaded > maxArticlesToDownload) {
             console.log("zu viele Artikel herunterzuladen");
             return;
         }
-        const url = "https://en.wikipedia.org/w/api.php?" +
+        const url = "https://" + language + ".wikipedia.org/w/api.php?" +
             new URLSearchParams({
                 origin: "*",
                 action: "parse",
@@ -105,18 +114,18 @@ async function downloadArticleAndLinks(article, maxDepth, onDownloadnumberChange
         return;
     }
 
-    offlineStorage.storeArticle(article, "en", "<!--links already downloaded-->\n" + text)
+    offlineStorage.storeArticle(article, "en", "<!--links already downloaded-->\n" + text);
     const tmp = document.createElement("div");
     tmp.innerHTML = text;
     let links = tmp.querySelectorAll("a");
     var allPromises = [];
     for (let link of links) {
         if (link.title.length != 0) {
-            if(articlesStartedDownloading>maxArticlesToDownload){
+            if (articlesStartedDownloading > maxArticlesToDownload) {
                 await Promise.all(allPromises);
-                allPromises=[];
+                allPromises = [];
             }
-            if(articlesDownloaded>maxArticlesToDownload){
+            if (articlesDownloaded > maxArticlesToDownload) {
                 return;
             }
             let nameSplit = link.pathname.split("/");

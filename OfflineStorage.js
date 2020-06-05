@@ -16,7 +16,7 @@
 /**@type {articleStore} */
 var setWiki = null;
 /**@type {articleLoad} */
-var articleLoad = null
+var articleLoad = null;
 
 
 /**@type {articleStore} */
@@ -49,7 +49,7 @@ class OfflineStorage {
      * @returns {Promise<void>}
      */
     getReadyPromise() {
-        return null
+        return null;
     }
 }
 class FileSystemOfflineStorage extends OfflineStorage {
@@ -92,22 +92,22 @@ class IndexedDbOfflineStorage extends OfflineStorage {
             request.onerror = e => {
                 console.log(e);
                 reject();
-            }
+            };
             request.onsuccess = function (event) {
                 this.db = event.target.result;
                 resolve();
             }.bind(this);
         }.bind(this)
-        )
+        );
         request.onupgradeneeded = function (event) {
             /**@type {IDBDatabase} */
             var db = event.target.result;
-            if(!db.objectStoreNames.contains("articles"));
-            var objectStore = db.createObjectStore("articles", { keyPath: "title" })
+            if (!db.objectStoreNames.contains("articles"));
+            var objectStore = db.createObjectStore("articles", { keyPath: "title" });
             this.store = objectStore;
             objectStore.createIndex("by_content", "content", { unique: true });
-            objectStore.put({ title: "example", content: "hi" })
-        }
+            objectStore.put({ title: "example", content: "hi" });
+        };
     }
     storeArticle(name, language, content) {
         var tx = this.db.transaction("articles", "readwrite");
@@ -115,27 +115,27 @@ class IndexedDbOfflineStorage extends OfflineStorage {
         var transac = store.put({ title: language + name, content: content });
         return new Promise((res, rej) => {
             transac.onsuccess = ev =>
-                res()
-            transac.onerror = ev => rej()
+                res();
+            transac.onerror = ev => rej();
         }
-        )
+        );
     }
     loadArticle(name, language) {
         var tx = this.db.transaction("articles", "readwrite");
         var store = tx.objectStore("articles");
-        var transac = store.get(language + name)
+        var transac = store.get(language + name);
         return new Promise((res, rej) => {
             transac.onsuccess = ev => {
                 if (transac.result) {
-                    res(transac.result.content)
+                    res(transac.result.content);
                 } else {
                     res(null);
                 }
-            }
+            };
             transac.onerror = ev =>
-                rej()
+                rej();
         }
-        )
+        );
     }
     isReady() {
         return this.db != null;
@@ -145,24 +145,24 @@ class IndexedDbOfflineStorage extends OfflineStorage {
     }
 }
 
-class LocalOfflineStorage extends OfflineStorage{
-    constructor(){
+class LocalOfflineStorage extends OfflineStorage {
+    constructor() {
         super();
     }
-    isReady(){return true;}
-    getReadyPromise(){
-        return new Promise((res,rej)=>res());
+    isReady() { return true; }
+    getReadyPromise() {
+        return new Promise((res, rej) => res());
     }
     storeArticle(name, language, content) {
-        return new Promise((res,rej)=>{
-            localStorage.setItem(language+name,content);
+        return new Promise((res, rej) => {
+            localStorage.setItem(language + name, content);
             res();
-        })
+        });
     }
     loadArticle(name, language) {
-        return new Promise((res,rej)=>{
-            res(localStorage.getItem(language+name));
-        })
+        return new Promise((res, rej) => {
+            res(localStorage.getItem(language + name));
+        });
     }
 }
 /**@type {OfflineStorage} */
@@ -171,7 +171,7 @@ function setupOfflineStorage() {
     //var fs = new FileSystemOfflineStorage();
     if (window.indexedDB) {
         offlineStorage = new IndexedDbOfflineStorage();
-    }else if(window.localStorage){
-        offlineStorage=new LocalOfflineStorage();
+    } else if (window.localStorage) {
+        offlineStorage = new LocalOfflineStorage();
     }
 }

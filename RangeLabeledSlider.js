@@ -10,13 +10,13 @@ function createRangeLabeledSlider(min,max,initialValue,valueToLabel=value=>"valu
     const id=Math.random().toString();
     const cont=document.createElement("div");
     const label=document.createElement("label");
-    label.setAttribute("for",id)
+    label.setAttribute("for",id);
     label.style.position="absolute";
     label.style.bottom="3%";
     label.style.fontSize="100%";
     label.style.width="100%";
     label.style.textAlign="center";
-    label.style.height="20%";
+    label.style.height="40%";
     label.style.overflowY="auto";
     const slider=document.createElement("input");
     slider.id=id;
@@ -36,14 +36,14 @@ function createRangeLabeledSlider(min,max,initialValue,valueToLabel=value=>"valu
     lowerLimitMarker.style.position="absolute";
     lowerLimitMarker.style.fontSize="100%";
     lowerLimitMarker.style.bottom="3%";
-    lowerLimitMarker.style.left="3%"
+    lowerLimitMarker.style.left="3%";
     lowerLimitMarker.style.height="20%";
     lowerLimitMarker.innerHTML=min;
     const upperLimitMarker=document.createElement("p");
     upperLimitMarker.style.position="absolute";
     upperLimitMarker.style.fontSize="100%";
     upperLimitMarker.style.bottom="3%";
-    upperLimitMarker.style.right="3%"
+    upperLimitMarker.style.right="3%";
     upperLimitMarker.innerHTML=max;
     cont.appendChild(slider);
     cont.appendChild(label);
@@ -52,7 +52,7 @@ function createRangeLabeledSlider(min,max,initialValue,valueToLabel=value=>"valu
     label.innerHTML=valueToLabel(initialValue);
     onchange(initialValue);
     cont.getValue=function(){
-        return parseFloat(slider.value)
-    }
+        return parseFloat(slider.value);
+    };
     return cont;
 }

@@ -1,26 +1,26 @@
+
 /**
  * @type {NavNode}
  */
-var root; //=new NavNode(null);
+/*
+var root;
 var footer = document.createElement("footer");
 var currentDepth = 0;
 var currentOpenDepth = 0;
 var ySwipe = 0;
 var openPage = document.createElement("div");
-var settings = document.createElement("div");
 var win = document.createElement("div");
 var upButton = document.createElement("div");
-var slideTime = 300;
-var distaneWithoutScaling = 1 / 10;
 var winHeight = 0;
-var winWidth = 0;
+var winWidth = 0;*/
 var thumbnailWidth = 70;
 var thumbnailHeight = 60;
 var gap = 7;
-var lastEl = [];
-var footerY = 0;
+var slideTime = 300;
+var distaneWithoutScaling = 1 / 10;
+var settings = document.createElement("div");
 /**
- * @type {string[]}
+ * @type {Tab[]}
  */
 var openPages = [];
 /**
@@ -29,168 +29,155 @@ var openPages = [];
 var drawnContents = new Set([]);
 var nameToNavNode = new Map();
 let articleToNode = new Map();
-var thumbnailColor = "rgba(176, 232, 183, 0.3)"
+var thumbnailColor = "rgba(176, 232, 183, 0.3)";
+/**@type {SlideNavigator} */
+var slideNavigator;
 window.onresize = function () {
-    this.win.style.height = window.innerHeight + "px";
-    this.winHeight = window.innerHeight;
-    this.winWidth = window.innerWidth;
-    this.root.resize();
-    this.updateElementPositions();
+	this.slideNavigator.onresize();
+	/*this.win.style.height = window.innerHeight + "px";
+	this.winHeight = window.innerHeight;
+	this.winWidth = window.innerWidth;
+	//this.root.resize();
+
+	this.updateElementPositions();*/
 };
 function setWidth() {
-    thumbnailWidth = parseFloat(document.getElementById("tWidth").value);
-    localStorage.setItem("thumbnailWidth", thumbnailWidth);
-    root.resize();
+	slideNavigator.thumbnailWidth = parseFloat(document.getElementById("tWidth").value);
+	localStorage.setItem("thumbnailWidth", slideNavigator.thumbnailWidth);
+	slideNavigator.onresize();
 }
 function setHeight() {
-    thumbnailHeight = parseFloat(document.getElementById("tHeight").value);
-    localStorage.setItem("thumbnailHeight", thumbnailHeight);
-    root.resize();
+	slideNavigator.thumbnailHeight = parseFloat(document.getElementById("tHeight").value);
+	localStorage.setItem("thumbnailHeight", thumbnailHeight);
+	slideNavigator.onresize();
 }
 function setColor() {
-    var opacity = parseFloat(document.getElementById("opacity").value) / 100;
-    var colorRaw = document.getElementById("colorPicker").value;
-    var tmp = document.createElement("div");
-    tmp.style.backgroundColor = colorRaw;
-    var withoutTrans = tmp.style.backgroundColor;
-    thumbnailColor = "rgba" + withoutTrans.substring(3, withoutTrans.length - 1) + ", " + opacity + ")";
-    localStorage.setItem("thumbnailColor", thumbnailColor);
-    this.root.forEach(el => {
-        el.thumbnail.style.backgroundColor = thumbnailColor
-    });
+	var opacity = parseFloat(document.getElementById("opacity").value) / 100;
+	var colorRaw = document.getElementById("colorPicker").value;
+	var tmp = document.createElement("div");
+	tmp.style.backgroundColor = colorRaw;
+	var withoutTrans = tmp.style.backgroundColor;
+	thumbnailColor = "rgba" + withoutTrans.substring(3, withoutTrans.length - 1) + ", " + opacity + ")";
+	localStorage.setItem("thumbnailColor", thumbnailColor);
+	this.root.forEach(el => {
+		el.thumbnail.style.backgroundColor = thumbnailColor;
+	});
 }
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').then(function (reg) {
-        if (reg.installing) {
-            console.log('Service worker installing');
-        } else if (reg.waiting) {
-            console.log('Service worker installed');
-        } else if (reg.active) {
-            console.log('Service worker active');
-        }
+	navigator.serviceWorker.register('sw.js').then(function (reg) {
+		if (reg.installing) {
+			console.log('Service worker installing');
+		} else if (reg.waiting) {
+			console.log('Service worker installed');
+		} else if (reg.active) {
+			console.log('Service worker active');
+		}
 
-    }).catch(function (error) {
-        // registration failed
-        console.log('Registration failed with ' + error);
-    });
+	}).catch(function (error) {
+		// registration failed
+		console.log('Registration failed with ' + error);
+	});
 }
 window.onload = function () {
-    this.setupOfflineStorage();
-    if (this.localStorage.getItem("thumbnailColor"))
-        this.thumbnailColor = localStorage.getItem("thumbnailColor");
-    if (localStorage.getItem("thumbnailWidth"))
-        thumbnailWidth = parseFloat(localStorage.getItem("thumbnailWidth"));
-    if (localStorage.getItem("thumbnailHeight"))
-        thumbnailHeight = parseFloat(localStorage.getItem("thumbnailHeight"));
-    this.win.style.height = window.innerHeight + "px";
-    this.win.style.width = "100%";
-    this.win.style.position = "absolute";
-    this.win.style.overflow = "hidden";
-    this.win.style.left = 0 + "px";
-    this.win.style.top = 0 + "px";
-    this.winHeight = window.innerHeight;
-    this.winWidth = window.innerWidth;
-    this.upButton.style.position = "fixed";
-    this.upButton.style.width = this.thumbnailWidth + "px";
-    this.upButton.style.height = this.thumbnailHeight + "px";
-    this.upButton.style.backgroundColor = "white";
-    this.upButton.style.bottom = gap + "px";
-    this.upButton.innerHTML = "&#709";
-    this.upButton.style.textAlign = "center";
-    this.upButton.style.fontSize = this.thumbnailHeight + "px";
-    this.upButton.style.borderRadius = "5px";
-    this.upButton.style.zIndex = 10;
-    this.upButton.onclick = function (ev) {
-        if (ySwipe > 0 && !this.root.childControlDiv.a.sliding) {
-            this.root.childControlDiv.a.moveElementYWithoutTouch(ySwipe, false);
-            this.root.childControlDiv.a.slideToPoint(
-                new Point(
-                    this.root.childControlDiv.a.currentX,
-                    ySwipe - thumbnailHeight
-                ),
-                slideTime
-            );
-        }
-    }.bind(this);
-    window.onhashchange = function () {
-        var newPageNames = this.urlToArray(window.location.href);
-        for (var i = newPageNames.length; i < this.openPages.length; i++) {
-            this.root.removeChildNode(i);
-            updateSliders();
-        }
-        for (var i = 0; i < this.Math.min(newPageNames.length, this.openPages.length); i++) {
-            if (this.openPages[i] != newPageNames[i]) {
-                this.loadWiki(newPageNames[i]).then(function (index, text) {
-                    var newArticle = getNavNodeFromHtml(text).children[0];
-                    newArticle.thumbnail.innerHTML = newPageNames[index];
-                    window.root.replaceChildNode(newArticle, index);
-                    updateSliders();
-                }.bind(null, i))
-            }
-        }
-        /**@type {Promise<string>[]} */
-        var allPromises = [];
-        for (var i = this.openPages.length; i < newPageNames.length; i++) {
-            allPromises.push(this.loadWiki(newPageNames[i]))/*.then(function(index,text){
-                var newArticle=getNavNodeFromHtml(text).children[0];
-                newArticle.thumbnail.innerHTML=newPageNames[index];
-                window.root.addChildNode(newArticle,index);
-                updateSliders();
-            }.bind(null,i))*/
-        }
-        Promise.all(allPromises).then(results => {
-            for (let i in results) {
-                var newArticle = getNavNodeFromHtml(results[i]).children[0];
-                newArticle.thumbnail.innerHTML = newPageNames[i];
-                window.root.addChildNode(newArticle, i);
-            }
-            updateSliders();
-        })
-        this.openPages = newPageNames;
-        //this.updateSliders();
-        this.root.childControlDiv.a.slideToY(0, slideTime);
-    }
-    var urlString = window.location.href;
-    var url = new this.URL(urlString);
-    root = new NavNode(null);
-    let thumbnail = this.document.createElement("div");
-    thumbnail.innerHTML = "+";
-    thumbnail.style.textAlign = "center";
-    var searchPage = new NavNode(root, createSearchPage(), thumbnail);
-    /*var pages = url.hash.substring(1).split("%");
-    for (let i in pages) {
-        this.loadWiki(pages[i]).then(htmlText => {
-            var newRoot = getNavNodeFromHtml(htmlText).children[0];
-            newRoot.thumbnail.innerHTML = pages[i];
-            window.root.addChildNode(newRoot, window.root.children.length - 1);
-            updateSliders();
-        })
-    }*/
-    //this.loadWiki(url.hash.substring(1)).then(loadHTMLText);
-    this.settings.className = "settings";
-    this.settings.style.height = this.winHeight - this.thumbnailHeight + "px";
-    this.fetch("settings.html").then(res =>
-        res.text().then(text=>
-            this.settings.innerHTML=text
-            ));
-    //this.settings.innerHTML = "<h1>Settings</h1><p>thumbnail width:<input id=\"tWidth\" onchange=\"setWidth()\" type=\"range\" max=\"300\" min=\"50\"></p> <p> thumbnail height <input id=\"tHeight\" onchange=\"setHeight()\" type=\"range\" max=\"100\" min=\"20\"></p><p> set color<input type=color id=\"colorPicker\" onchange=\"setColor()\"></p><p> opacity <input id=\"opacity\" onchange=\"setColor()\" type=\"range\" max=\"100\" min=\"0\"></p>";
-    this.footer.appendChild(settings);
-    this.footer.setAttribute("class", "slideFooter");
-    this.footer.style.top = "100%"; //window.innerHeight-50+"px";
-    //this.document.body.appendChild(this.upButton);
-    this.document.body.appendChild(this.footer);
-    this.document.body.appendChild(this.win);
-    updateSliders();
-    window.onhashchange();
+	this.setupOfflineStorage();
+	this.document.body.style.height = window.innerHeight + "px";
+	/*this.win.style.height = window.innerHeight + "px";
+	this.win.style.width = "100%";
+	this.win.style.position = "absolute";
+	this.win.style.overflow = "hidden";
+	this.win.style.left = 0 + "px";
+	this.win.style.top = 0 + "px";
+	this.winHeight = window.innerHeight;
+	this.winWidth = window.innerWidth;
+	this.upButton.style.position = "fixed";
+	this.upButton.style.width = this.thumbnailWidth + "px";
+	this.upButton.style.height = this.thumbnailHeight + "px";
+	this.upButton.style.backgroundColor = "white";
+	this.upButton.style.bottom = gap + "px";
+	this.upButton.innerHTML = "&#709";
+	this.upButton.style.textAlign = "center";
+	this.upButton.style.fontSize = this.thumbnailHeight + "px";
+	this.upButton.style.borderRadius = "5px";
+	this.upButton.style.zIndex = 10;
+	this.upButton.onclick = function (ev) {
+		if (ySwipe > 0 && !this.root.childControlDiv.a.sliding) {
+			this.root.childControlDiv.a.moveElementYWithoutTouch(ySwipe, false);
+			this.root.childControlDiv.a.slideToPoint(
+				new Point(
+					this.root.childControlDiv.a.currentX,
+					ySwipe - thumbnailHeight
+				),
+				slideTime
+			);
+		}
+	}.bind(this);*/
+	window.onhashchange = function () {
+		var newPageNames = this.urlToArray(window.location.href);
+		for (let i = newPageNames.length; i < this.openPages.length; i++) {
+			this.slideNavigator.root.removeChildNode(i);
+			updateSlidersNav(this.slideNavigator);
+			this.slideNavigator.onresize();
+		}
+		for (let i = 0; i < this.Math.min(newPageNames.length, this.openPages.length); i++) {
+			if (!this.openPages[i].equals(newPageNames[i])) {
+				this.tabToNode(newPageNames[i]).then(function (index, node) {
+					slideNavigator.root.replaceChildNode(node, index);
+					updateSlidersNav(slideNavigator);
+					slideNavigator.onresize();
+				}.bind(null, i));
+			}
+		}
+		/**@type {Promise<NavNode>[]} */
+		var allPromises = [];
+		for (let i = this.openPages.length; i < newPageNames.length; i++) {
+			allPromises.push(this.tabToNode(newPageNames[i]));
+		}
+		const lastTabAmount=this.openPages.length;
+		Promise.all(allPromises).then(results => {
+			for (let i in results) {
+				i=this.parseInt(i);
+				this.slideNavigator.root.addChildNode(results[i], i+lastTabAmount);
+			}
+			updateSlidersNav(this.slideNavigator);
+			this.slideNavigator.onresize();
+		})
+		this.openPages = newPageNames;
+		//this.updateSliders();
+		this.slideNavigator.root.childControlDiv.a.slideToY(0, slideTime);
+	}
+	var urlString = window.location.href;
+	var url = new this.URL(urlString);
+	root = new NavNode(null);
+	let thumbnail = this.document.createElement("div");
+	thumbnail.innerHTML = "&#128269;";
+	thumbnail.style.textAlign = "center";
+	var searchPage = new NavNode(root, createSearchPage(), thumbnail);
+	this.settings.className = "settings";
+	this.settings.style.height = this.winHeight - this.thumbnailHeight + "px";
+	this.fetch("settings.html").then(res =>
+		res.text().then(text =>
+			this.settings.innerHTML = text
+		));
+	this.slideNavigator = new SlideNavigator(this.document.body, this.root);
+	this.slideNavigator.footer.prepend(settings);
+	if (this.localStorage.getItem("thumbnailColor"))
+		this.thumbnailColor = localStorage.getItem("thumbnailColor");
+	if (localStorage.getItem("thumbnailWidth"))
+		slideNavigator.thumbnailWidth = parseFloat(localStorage.getItem("thumbnailWidth"));
+	if (localStorage.getItem("thumbnailHeight"))
+		slideNavigator.thumbnailHeight = parseFloat(localStorage.getItem("thumbnailHeight"));
+
+	this.slideNavigator.onresize();
+	window.onhashchange();
 };
 function loadHTMLText(text) {
-    while (win.firstChild) {
-        win.firstChild.style.display = "none";
-        win.removeChild(win.firstChild);
-    }
-    currentOpenDepth = 0;
-    ySwipe = 0;
-    window.root = getNavNodeFromHtml(text);
-    updateSliders();
+	while (win.firstChild) {
+		win.firstChild.style.display = "none";
+		win.removeChild(win.firstChild);
+	}
+	currentOpenDepth = 0;
+	ySwipe = 0;
+	window.root = getNavNodeFromHtml(text);
+	updateSlidersNav(slideNavigator);
 
 }

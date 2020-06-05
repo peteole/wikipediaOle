@@ -5,29 +5,34 @@ function createSearchPage() {
     var searchBar = document.createElement("input");
     header.appendChild(searchBar);
     searchBar.className = "searchBar";
+    var languageInput = document.createElement("input");
+    header.appendChild(languageInput);
+    languageInput.className = "languageInput";
+    languageInput.value = "en";
     var output = document.createElement("p");
     var submitButton = document.createElement("button");
     submitButton.innerHTML = "&#128269;";
     submitButton.onclick = function (ev) {
-        loadSearch(searchBar, output)
+        loadSearch(searchBar, languageInput, output);
         while (output.firstElementChild) {
             output.removeChild(output.firstElementChild);
         }
-    }
+    };
     header.appendChild(submitButton);
     searchBar.onchange = function (ev) {
-        loadSearch(searchBar, output)
+        loadSearch(searchBar, languageInput, output);
         while (output.firstElementChild) {
             output.removeChild(output.firstElementChild);
         }
-    }
+    };
     content.appendChild(header);
     content.appendChild(output);
     return content;
 }
-async function loadSearch(searchBar, output = document.createElement("p")) {
+async function loadSearch(searchBar, languageInput, output = document.createElement("p")) {
     var searchText = searchBar.value;
-    const url = "https://en.wikipedia.org/w/api.php?" +
+    var language = languageInput.value;
+    const url = "https://" + language + ".wikipedia.org/w/api.php?" +
         new URLSearchParams({
             origin: "*",
             action: "opensearch",
@@ -59,22 +64,71 @@ async function loadSearch(searchBar, output = document.createElement("p")) {
             var name = split[split.length - 1];
             result.name = name;
             result.title = json[1][i];
+            result.oncontextmenu = function (ev) {
+                ev.preventDefault();
+                const title = ev.target.name;
+                document.body.appendChild(createArticleOpenMenu(title));
+            };
             result.onclick = function (ev) {
                 var url = new URL(window.location.href);
                 var title = ev.target.name;
-                openPages.push(title);
-                url.hash = arrayToHash(openPages);
-                window.history.pushState(null, "Wikipipedia: " + title, url.href);
+                let openPagesCopy = Array.from(openPages);
+                openPagesCopy.push(new Tab(title, "a", language, "s"));
+                url.hash = arrayToHash(openPagesCopy);
+                window.location = url;
+                /*window.history.pushState(null, "Wikipipedia: " + title, url.href);
                 loadWiki(title).then(htmlText => {
                     var newRoot = getNavNodeFromHtml(htmlText).children[0];
                     newRoot.thumbnail.innerHTML = ev.target.title;
                     window.root.addChildNode(newRoot, window.root.children.length - 1);
-                    updateSliders();
-                });
-            }
+                    updateSlidersNav(slideNavigator);
+                    slideNavigator.onresize();
+                });*/
+            };
             output.appendChild(result);
         }
     } catch (e) {
         console.error(e);
     }
+}
+function createArticleOpenMenu(title = "") {
+    let popup = document.createElement("div");
+    popup.className = "popup";
+    let headline = document.createElement("h1")
+    headline.innerHTML = "Options for article \"" + title + "\"";
+    popup.appendChild(headline);
+    popup.appendChild(document.createElement("hr"));
+    let closeButton = document.createElement("button");
+    closeButton.innerHTML = "&#10006;";
+    closeButton.className = "closeButton";
+    closeButton.onclick = function (ev) {
+        this.parentElement.removeChild(this);
+    }.bind(popup);
+    popup.appendChild(closeButton);
+    const openNormallyButton = document.createElement("button");
+    openNormallyButton.innerHTML = "open page in new tab";
+    openNormallyButton.className = "controlButton";
+    openNormallyButton.onclick = (ev) => {
+        var url = new URL(window.location.href);
+        let openPagesCopy = Array.from(openPages);
+        openPagesCopy.push(new Tab(title, "a", "en", "s"));
+        url.hash = arrayToHash(openPagesCopy);
+        window.location = url;
+        popup.parentElement.removeChild(popup);
+    }
+    popup.appendChild(openNormallyButton);
+
+    const openPlainButton = document.createElement("button");
+    openPlainButton.innerHTML = "open page in new tab in plain view";
+    openPlainButton.className = "controlButton";
+    openPlainButton.onclick = (ev) => {
+        var url = new URL(window.location.href);
+        let openPagesCopy = Array.from(openPages);
+        openPagesCopy.push(new Tab(title, "a", "en", "p"));
+        url.hash = arrayToHash(openPagesCopy);
+        window.location = url;
+        popup.parentElement.removeChild(popup);
+    }
+    popup.appendChild(openPlainButton);
+    return popup;
 }
