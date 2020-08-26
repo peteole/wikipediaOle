@@ -8,7 +8,7 @@
             "type": "image/png"
         }
     ],
-    "start_url": "/wikipediaOle//home.html",
+    "start_url": "/wikipediaOle/home.html",
     "display": "standalone",
     "background_color": "#3E4EB8",
     "theme_color": "#2F3BA2"
