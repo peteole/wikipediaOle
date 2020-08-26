@@ -75,7 +75,8 @@ class Tab {
     }
     toHashPart() {
         let encodedLocation = this.location;
-        encodedLocation = encodeURIComponent(this.location);
+        if (this.type == 'e')
+            encodedLocation = encodeURIComponent(this.location);
         return this.type + "%" + this.language + "%" + this.layout + "%" + encodedLocation;
     }
     /**@param {Tab} tab */
