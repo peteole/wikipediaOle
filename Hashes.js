@@ -69,18 +69,13 @@ class Tab {
         for (let i = 4; i < split.length; i++) {
             encodedLocation += "%" + split[i];
         }
-        switch (type) {
-            case "a":
-                return new Tab(encodedLocation, type, language, layout);
-            case "e":
-                let url = decodeURIComponent(encodedLocation);
-                return new Tab(url, type, language, layout);
-        }
+        let url = decodeURIComponent(encodedLocation);
+        return new Tab(url, type, language, layout);
+
     }
     toHashPart() {
         let encodedLocation = this.location;
-        if (this.type == "e")
-            encodedLocation = encodeURIComponent(this.location);
+        encodedLocation = encodeURIComponent(this.location);
         return this.type + "%" + this.language + "%" + this.layout + "%" + encodedLocation;
     }
     /**@param {Tab} tab */
