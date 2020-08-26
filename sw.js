@@ -1,7 +1,7 @@
 self.addEventListener("install", event => {
 
 	event.waitUntil(
-		caches.open('v6').then(function (cache) {
+		caches.open('v7').then(function (cache) {
 			return cache.addAll([
 				'home.html',
 				'main.js',
@@ -19,7 +19,8 @@ self.addEventListener("install", event => {
 				'settings.html',
 				'general.js',
 				'SlideNavigator.js',
-				'tabToNode.js'
+				'tabToNode.js',
+				'icons/icon.png'
 			]);
 		})
 	);
@@ -35,7 +36,7 @@ self.addEventListener('fetch', function (event) {
 		}
 	}));
 });
-let expectedCaches = ["v6"];
+let expectedCaches = ["v7"];
 self.addEventListener('activate', event => {
 	// delete any caches that aren't in expectedCaches
 	// which will get rid of static-v1
